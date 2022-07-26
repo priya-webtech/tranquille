@@ -653,7 +653,7 @@ class VendorController extends Controller
         }
     }
 
-     public function searchVendorList(Request $request)
+    public function searchVendorFilter(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
@@ -667,39 +667,137 @@ class VendorController extends Controller
             $longitude = $request->longitude;
             $distance = isset($request->distance) ? $request->distance : 25 ;
 
-            $vendors = VendorDetail::with('vendorrating','vendortreatments','vendoraddress')
-                ->where(function ($query) use($request) {
+            $rawquery = VendorDetail::with('vendorrating','vendortreatments','vendoraddress','vendorproducts')
+                 ->where(function ($query) use($request) {
+                    $query->where('membershipvalid','>=', date('Y-m-d'));
+                    if(!empty($request->service_id))
+                    {
+                        $query->whereHas('vendorservices', function($query) use ($request){
+                            $query->where('service_id', '=', $request->service_id);
+                        });
+                    }
+                    if(!empty($request->treatment_id))
+                    {
+                        $query->whereHas('vendortreatments', function($query) use ($request){
+                            $query->where('treatment_id', '=', $request->treatment_id);
+                        });
+                    }
+                    if(!empty($request->product_id))
+                    {
+                        $products = explode(',', $request->product_id);
+                        $query->whereHas('vendorproducts', function($query) use ($products){
+                           // $query->whereIn('productbrand_id', $products);
+                        });
+                    }
+                    if(!empty($request->priceMin))
+                    {
+                        $query->whereHas('vendortreatments', function($query) use ($request){
+                            if(!empty($request->treatment_id)){
+                               $query->where('treatment_id', '=', $request->treatment_id); 
+                            }
+                            $query->where('price', '>=', $request->priceMin);
+                        });
+                    }
+                    if(!empty($request->priceMax))
+                    {
+                        $query->whereHas('vendortreatments', function($query) use ($request){
+                            if(!empty($request->treatment_id)){
+                               $query->where('treatment_id', '=', $request->treatment_id); 
+                            }
+                            $query->where('price', '<=', $request->priceMax);
+                        });
+                    }
+                    if(!empty($request->rating))
+                    {
+                        $query->whereHas('vendorrating', function($query) use ($request){
+                            $query->where('rating', '>', $request->rating);
+                        });
+                    }
                     if(!empty($request->search))
                     {
                        $query->where('firm_name', 'like', "%$request->search%");
                     }
+                    if(!empty($request->date))
+                    {
+                        $query->whereHas('vendorBusinessHours', function($query) use ($request){
+                            $day = date('D', strtotime($request->date));
+                            switch ($day) {
+                                case 'Mon':
+                                    $query->where('dayMondayStatus', '=', 1);
+                                    break;
+                                case 'Tue':
+                                    $query->where('dayTuesdayStatus', '=', 1);
+                                    break;
+                                case 'Wed':
+                                    $query->where('dayWednesdayStatus', '=', 1);
+                                break;
+                                case 'Thu':
+                                    $query->where('dayThursdayStatus', '=', 1);
+                                break;
+                                case 'Fri':
+                                    $query->where('dayFridayStatus', '=', 1);
+                                break;
+                                case 'Sat':
+                                    $query->where('daySaturdayStatus', '=', 1);
+                                break;
+                                case 'Sun':
+                                    $query->where('daySundayStatus', '=', 1);
+                                break;
+                                default:
+                                    $query->where('dayMonFriStatus', '=', 1);
+                                break;
+                            }
+                        });
+                    }
                 })
-                ->select(DB::raw('vendor_id, firm_name, about_us, latitude, longitude, membershipvalid ,'.DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo').', FLOOR( 6367  acos( cos( radians('.$latitude.') )  cos( radians( latitude ) )  cos( radians( longitude ) - radians('.$longitude.') ) + sin( radians('.$latitude.') )  sin( radians( latitude ) ) ) ) AS distance'))
-                ->havingRaw("distance < $distance")
-                ->where('membershipvalid','>=', date('Y-m-d'))
-//               // ->having('distance', '<', $distance)->orderBy('distance')->get();
-               ->orderBy('distance')->get();
+                ->select(DB::raw('vendor_id, firm_name, about_us, '.DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo').', ( 6367 * acos( cos( radians('.$latitude.') ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians('.$longitude.') ) + sin( radians('.$latitude.') ) * sin( radians( latitude ) ) ) ) AS distance'))
+                ->having('distance', '<', $distance);
+            if($request->shortBy == 'Highest rated')
+            {
+                $vendors = $rawquery->get();
+            }
+            else if ($request->shortBy == 'Lowest price')
+            {
+                $vendors = $rawquery->get();
+            }
+            else if ($request->shortBy == 'Highest price')
+            {
+                $vendors = $rawquery->get();
+            }
+            else if($request->shortBy == 'Discount')
+            {
+                $vendors = $rawquery->get();
+            }
+            else
+            {
+                $vendors = $rawquery->get();
+            }
+
 
             if ($vendors) {
                 $datalist = collect([]);
                 foreach ($vendors as $key => $rows) {
                     $address = !empty($rows->vendoraddress) ? $rows->vendoraddress->first() : array();
-                    $treatment = !empty($rows->vendortreatments) ? $rows->vendortreatments->first() : array();
-                    $avgrating = $rows->vendorrating->avg('rating') ;
                     $datalist->push([
                         'vendor_id' => $rows->vendor_id,
                         'firm_name' => $rows->firm_name,
-                        'latitude' => isset($rows->latitude) ? $rows->latitude : '',
-                        'longitude' => isset($rows->longitude) ? $rows->longitude : '',
-                        'treatment_name' => isset($treatment['treatmentinfo']['treatment_name']) ? $treatment['treatmentinfo']['treatment_name'] : '',
                         'about_us' => isset($rows->about_us) ? $rows->about_us : '',
                         'logo' => isset($rows->logo) ? $rows->logo : '',
                         'distance' => $rows->distance,
-                        'rating' => isset($avgrating) ? $avgrating : 0,
-                        'vendoraddress' => isset($address['address_line1']) ? $address['address_line1'].' '.$address['city'].' '.$address['state'].' '.$address['postcode'] : '',
+                        // 'rating' => $rows->vendorrating->avg('rating'),
+                        'rating' => !empty($rows->vendorrating) ? $rows->vendorrating->avg('rating') : 0 ,
+                        'vendoraddress' => isset($address['address_line1']) ? $address['address_line1'].', '.$address['city'].', '.$address['state'].', '.$address['postcode'] : '',
                     ]);
                 }
-                return response()->json(['status' => 200, 'message' => 'Data successfully retrieved', 'data' => $datalist ], 200);
+                $offers = Offer::where('active','=','Y')
+                                ->select('id','offer_title', 'discount',DB::raw('CONCAT("'.URL::to('/').'/public/", offer_image) AS offer_image '))
+                                ->get();
+
+                $data = collect([
+                    'vendors' => $datalist,
+                    'offers' => $offers
+                ]);
+                return response()->json(['status' => 200, 'message' => 'Data successfully retrieved', 'data' => $data ], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in data retrieved'], 404);
         } catch (\Exception $e) {
