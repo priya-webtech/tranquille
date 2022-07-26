@@ -667,8 +667,10 @@ class VendorController extends Controller
             $longitude = $request->longitude;
             $distance = isset($request->distance) ? $request->distance : 25 ;
 
-            $rawquery = VendorDetail::with('vendorrating','vendortreatments','vendoraddress','vendorproducts')
-                 ->where(function ($query) use($request) {
+            $rawquery = VendorDetail::leftJoin('vendor_treatments', 'vendor_treatments.vendor_id', '=', 'vendor_details.vendor_id')
+                ->leftJoin('feedback', 'feedback.reviewto', '=', 'vendor_details.vendor_id')
+                ->with('vendorrating','vendortreatments','vendoraddress','vendorproducts')
+                ->where(function ($query) use($request) {
                     $query->where('membershipvalid','>=', date('Y-m-d'));
                     if(!empty($request->service_id))
                     {
@@ -686,31 +688,31 @@ class VendorController extends Controller
                     {
                         $products = explode(',', $request->product_id);
                         $query->whereHas('vendorproducts', function($query) use ($products){
-                           // $query->whereIn('productbrand_id', $products);
+                           $query->whereIn('productbrand_id', $products);
                         });
                     }
                     if(!empty($request->priceMin))
                     {
                         $query->whereHas('vendortreatments', function($query) use ($request){
-                            if(!empty($request->treatment_id)){
-                               $query->where('treatment_id', '=', $request->treatment_id); 
-                            }
+                            // if(!empty($request->treatment_id)){
+                            //    $query->where('treatment_id', '=', $request->treatment_id); 
+                            // }
                             $query->where('price', '>=', $request->priceMin);
                         });
                     }
                     if(!empty($request->priceMax))
                     {
                         $query->whereHas('vendortreatments', function($query) use ($request){
-                            if(!empty($request->treatment_id)){
-                               $query->where('treatment_id', '=', $request->treatment_id); 
-                            }
+                            // if(!empty($request->treatment_id)){
+                            //    $query->where('treatment_id', '=', $request->treatment_id); 
+                            // }
                             $query->where('price', '<=', $request->priceMax);
                         });
                     }
                     if(!empty($request->rating))
                     {
                         $query->whereHas('vendorrating', function($query) use ($request){
-                            $query->where('rating', '>', $request->rating);
+                            $query->where('rating', '>=', $request->rating);
                         });
                     }
                     if(!empty($request->search))
@@ -750,28 +752,34 @@ class VendorController extends Controller
                         });
                     }
                 })
-                ->select(DB::raw('vendor_id, firm_name, about_us, '.DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo').', ( 6367 * acos( cos( radians('.$latitude.') ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians('.$longitude.') ) + sin( radians('.$latitude.') ) * sin( radians( latitude ) ) ) ) AS distance'))
-                ->having('distance', '<', $distance);
-            if($request->shortBy == 'Highest rated')
+                ->select(DB::raw('profile_viewed,vendor_details.vendor_id, firm_name, about_us, '.DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo').', ( 6367 * acos( cos( radians('.$latitude.') ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians('.$longitude.') ) + sin( radians('.$latitude.') ) * sin( radians( latitude ) ) ) ) AS distance'))
+                ->having('distance', '<=', $distance);
+            if($request->shortBy == 'Highest Rated')
             {
-                $vendors = $rawquery->get();
+                $rawquery->orderBy('rating', 'DESC');
             }
-            else if ($request->shortBy == 'Lowest price')
+            else if ($request->shortBy == 'Lowest Price')
             {
-                $vendors = $rawquery->get();
+                $rawquery->orderBy('price', 'ASC');
             }
-            else if ($request->shortBy == 'Highest price')
+            else if ($request->shortBy == 'Highest Price')
             {
-                $vendors = $rawquery->get();
+                $rawquery->orderBy('price', 'DESC');
             }
             else if($request->shortBy == 'Discount')
             {
-                $vendors = $rawquery->get();
+                $rawquery->orderBy('discount', 'DESC');
             }
-            else
+            else if($request->shortBy == 'Distance')
             {
-                $vendors = $rawquery->get();
+                $rawquery->orderBy('distance', 'ASC');
             }
+            else if($request->shortBy == 'Most Popular')
+            {
+                $rawquery->orderBy('profile_viewed', 'DESC');
+            }
+            
+            $vendors = $rawquery->get();
 
 
             if ($vendors) {
@@ -784,7 +792,6 @@ class VendorController extends Controller
                         'about_us' => isset($rows->about_us) ? $rows->about_us : '',
                         'logo' => isset($rows->logo) ? $rows->logo : '',
                         'distance' => $rows->distance,
-                        // 'rating' => $rows->vendorrating->avg('rating'),
                         'rating' => !empty($rows->vendorrating) ? $rows->vendorrating->avg('rating') : 0 ,
                         'vendoraddress' => isset($address['address_line1']) ? $address['address_line1'].', '.$address['city'].', '.$address['state'].', '.$address['postcode'] : '',
                     ]);
