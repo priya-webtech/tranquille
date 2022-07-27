@@ -86,7 +86,7 @@ class VendorController extends Controller
                     'longitude' => isset($request->longitude) ? $request->longitude : null,
                     'membershipvalid' => date('Y-m-d', strtotime('+ 30 day')),
                 ]);
-                
+
                 $notifydata = array('title' => 'Membership will expire ', 'message' => 'Your Membership will expire at '.date('Y-m-d', strtotime('+ 30 day')), 'status' =>  'Open', 'booking_id' =>  null);
                 sendPushNotification($notifydata, $user->id);
                 $token = $user->createToken('94b2f892-2c7c-4bf4-8043-cf9cf6cc4c70')->accessToken;
@@ -374,7 +374,7 @@ class VendorController extends Controller
             if ($validator->fails()) {
                 return response()->json(['status' => 201, 'message' =>  implode(', ', $validator->messages()->all())], 400);
             }
-            
+
             if ($request->file('demo_image') != null) {
                 $demo_image = collect([]);
                 $images = $request->file('demo_image');
@@ -695,7 +695,7 @@ class VendorController extends Controller
                     {
                         $query->whereHas('vendortreatments', function($query) use ($request){
                             // if(!empty($request->treatment_id)){
-                            //    $query->where('treatment_id', '=', $request->treatment_id); 
+                            //    $query->where('treatment_id', '=', $request->treatment_id);
                             // }
                             $query->where('price', '>=', $request->priceMin);
                         });
@@ -704,7 +704,7 @@ class VendorController extends Controller
                     {
                         $query->whereHas('vendortreatments', function($query) use ($request){
                             // if(!empty($request->treatment_id)){
-                            //    $query->where('treatment_id', '=', $request->treatment_id); 
+                            //    $query->where('treatment_id', '=', $request->treatment_id);
                             // }
                             $query->where('price', '<=', $request->priceMax);
                         });
@@ -778,7 +778,7 @@ class VendorController extends Controller
             {
                 $rawquery->orderBy('profile_viewed', 'DESC');
             }
-            
+
             $vendors = $rawquery->get();
 
 
@@ -823,7 +823,7 @@ class VendorController extends Controller
                     foreach ($services as $key => $value) {
                         $treatments = collect([]);
                         $treatmentid = Treatment::where('service_id','=',$value['service_id'])->pluck('id');
-                        $vendoretretment = VendorTreatment::with('treatmentinfo')->where('vendor_id',$userid)->select('id','treatment_id','description','price','discount','no_of_person')->whereIn('treatment_id',$treatmentid)->get();                        
+                        $vendoretretment = VendorTreatment::with('treatmentinfo')->where('vendor_id',$userid)->select('id','treatment_id','description','price','discount','no_of_person')->whereIn('treatment_id',$treatmentid)->get();
                         $data->push([
                             'service_id' => $value['service_id'],
                             'discount' => $value['discount'],
@@ -898,7 +898,7 @@ class VendorController extends Controller
             $viewData = ['vendor_id'=> $request->vendor_id];
 
             if(Auth::check()) {
-                
+
                 $viewData['user_id'] = Auth::id();
             } else {
                 $viewData['guest_ip'] = request()->ip();
@@ -909,7 +909,7 @@ class VendorController extends Controller
             if($view->exists()){
 
                 $view->update(['view_time' => now()]);
-                
+
             } else {
                 $viewData['view_time'] = now();
                 RecentlyView::create($viewData);
@@ -939,16 +939,26 @@ class VendorController extends Controller
             $latitude = $request->latitude;
             $longitude = $request->longitude;
             $distance = isset($request->distance) ? $request->distance : 25 ;
+
             $vendors = VendorDetail::with('vendorrating','vendortreatments','vendoraddress')
+
                 ->where(function ($query) use($request) {
                     if(!empty($request->search))
                     {
-                       $query->where('firm_name', 'like', "%$request->search%");
+                        $query->where('firm_name', 'like', "%$request->search%")
+                            ->orWhereHas('vendortreatments', function ($q) use ($request) {
+                                $q->whereHas('treatmentinfo', function($qp) use ($request)
+                                {
+                               $qp->where('treatment_name', 'like', "%$request->search%");
+                                });
+                            });
                     }
                 })
-                ->select(DB::raw('vendor_id, firm_name, about_us, latitude, longitude, membershipvalid ,'.DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo').', ( 6367 * acos( cos( radians('.$latitude.') ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians('.$longitude.') ) + sin( radians('.$latitude.') ) * sin( radians( latitude ) ) ) ) AS distance'))
+                ->select(DB::raw('vendor_id, firm_name, about_us, latitude, longitude, membershipvalid ,'.DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo').', FLOOR( 6367 * acos( cos( radians('.$latitude.') ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians('.$longitude.') ) + sin( radians('.$latitude.') ) * sin( radians( latitude ) ) ) ) AS distance'))
+                ->havingRaw("distance < $distance")
                 ->where('membershipvalid','>=', date('Y-m-d'))
-                ->having('distance', '<', $distance)->orderBy('distance')->get();
+//               // ->having('distance', '<', $distance)->orderBy('distance')->get();
+                ->orderBy('distance')->get();
 
             if ($vendors) {
                 $datalist = collect([]);
@@ -1149,7 +1159,7 @@ class VendorController extends Controller
                 $membership = Membership::where('user_id',$userid)->where('transaction_id',$request->transectionid)->first();
                 $membership->status = ($payment->status === 'paid') ? 1 : 0 ;
                 $membership->txn_status = ($payment->status === 'paid') ? 'succeeded' : 'error' ;
-                $membership->save(); 
+                $membership->save();
                 if($payment->status === 'paid')
                 {
                     VendorDetail::where('vendor_id',$userid)->update(['membershipvalid' => $membership->end_date]);

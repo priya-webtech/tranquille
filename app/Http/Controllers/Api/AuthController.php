@@ -22,9 +22,9 @@ class AuthController extends Controller
             'phone' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
         }
-        if (! $user = User::where('phone', $request['phone'])->select('id')->first()) 
+        if (! $user = User::where('phone', $request['phone'])->select('id')->first())
         {
             return response()->json(['status' => 200, 'message' => 'Phone number available.'], 200);
         }
@@ -36,9 +36,9 @@ class AuthController extends Controller
                 'email' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
         }
-        if (! $user = User::where('email', $request['email'])->select('id')->first()) 
+        if (! $user = User::where('email', $request['email'])->select('id')->first())
         {
             return response()->json(['status' => 200, 'message' => 'E-mail available.' ], 200);
         }
@@ -119,9 +119,9 @@ class AuthController extends Controller
                 'email' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
         }
-        if ($user = User::where('email', $request->email)->first()) 
+        if ($user = User::where('email', $request->email)->first())
         {
             $otp = rand(1000, 9999);
             $user->update(['otp' => $otp]);
@@ -144,9 +144,9 @@ class AuthController extends Controller
                 'phone' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
         }
-        if ($user = User::where('phone', $request->phone)->first()) 
+        if ($user = User::where('phone', $request->phone)->first())
         {
             $otp = rand(1000, 9999);
             $user->update(['otp' => $otp]);
@@ -170,16 +170,16 @@ class AuthController extends Controller
             'email'     => "required|email",
         ]);
         if ($validator->fails()) {
-            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
         }
-        if ($user = User::where('email', $request->email)->where('otp', '=',$request->otp)->update([ 'email_verified' => true])) 
+        if ($user = User::where('email', $request->email)->where('otp', '=',$request->otp)->update([ 'email_verified' => true]))
         {
             $userinfo = User::where('email', $request->email)->where('otp', '=',$request->otp)->first();
             unset($userinfo['password']);
             $token = $userinfo->createToken('94b2f892-2c7c-4bf4-8043-cf9cf6cc4c70')->accessToken;
             $data = userInfoResponse($userinfo->id);
             $data['token'] = $token;
-            return response()->json(['status' => 200, 'message' => 'Otp matched succesfull','data' => $data ], 200); 
+            return response()->json(['status' => 200, 'message' => 'Otp matched succesfull','data' => $data ], 200);
             // return response()->json(['status' => 200, 'message' => 'Otp matched succesfull'], 200);
         }
         return response()->json(['status' => 201, 'message' => 'Otp not matched' ], 200);
@@ -192,9 +192,9 @@ class AuthController extends Controller
             'phone'     => "required",
         ]);
         if ($validator->fails()) {
-            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+            return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
         }
-        if ($user = User::where('phone', $request->phone)->where('otp', '=',$request->otp)->update([ 'email_verified' => true])) 
+        if ($user = User::where('phone', $request->phone)->where('otp', '=',$request->otp)->update([ 'email_verified' => true]))
         {
             return response()->json(['status' => 200, 'message' => 'Otp matched succesfull'], 200);
         }
@@ -203,61 +203,61 @@ class AuthController extends Controller
     public function changePassword(Request $request)
     {
         try
-        { 
+        {
             $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
                 'password' => 'required',
                 'oldpassword'  => 'required',
-            ]); 
+            ]);
             if ($validator->fails()) {
-                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
             $user = User::find($userid);
             if (Hash::check($request['oldpassword'],$user['password']) ) {
                 $user->password = isset($request->password) ? Hash::make($request->password) : '';
                 if ($user->save()) {
-                    return response()->json(['status' => 200, 'message' => 'Password Changed' ], 200); 
+                    return response()->json(['status' => 200, 'message' => 'Password Changed' ], 200);
                 }
                 return response()->json(['status' => 201, 'message' => 'Error in user registertion' ], 200);
             }
             return response()->json(['status' => 201, 'message' => "Old password dosen't match" ], 200);
-            
+
         }
         catch(\Exception $e)
         {
             return response()->json(['status' => 201, 'message' => $e->getMessage() ], 500);
-        }        
+        }
     }
 
     public function getuserInfo(Request $request)
     {
         try
-        { 
+        {
             $userid = $request->user()->id;
             $data = userInfoResponse($userid);
             if(!empty($data))
             {
-                return response()->json(['status' => 200, 'message' => 'User found','data' => $data ], 200); 
+                return response()->json(['status' => 200, 'message' => 'User found','data' => $data ], 200);
             }
              return response()->json(['status' => 201, 'message' => 'Error in data retrieved' ], 200);
         }
         catch(\Exception $e)
         {
             return response()->json(['status' => 201, 'message' => $e->getMessage() ], 500);
-        } 
+        }
     }
 
     public function updateProfile(Request $request)
     {
         try
-        { 
+        {
             $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
                 'firstname' => 'required',
                 'lastname'  => 'required',
-            ]); 
+            ]);
             if ($validator->fails()) {
-                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
             $user = User::where('id', $userid)->select('id','active', 'firstname', 'lastname', 'profile', 'email', 'phone')->first();
             $user->name = isset($request->firstname) ? $request->firstname. ' '.$request->lastname : '';
@@ -273,7 +273,7 @@ class AuthController extends Controller
             }
             if ($user->save()) {
                $data = userInfoResponse($user->id);
-                return response()->json(['status' => 200, 'message' => 'Profile updated succesfully','data' => $data ], 200); 
+                return response()->json(['status' => 200, 'message' => 'Profile updated succesfully','data' => $data ], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in profile update' ], 200);
         }
@@ -285,13 +285,13 @@ class AuthController extends Controller
     public function profileimageUpdate(Request $request)
     {
         try
-        { 
+        {
             $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
                 'image' => 'required',
-            ]); 
+            ]);
             if ($validator->fails()) {
-                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
             if ($request->file('image') != null) {
                 removeFileFromPath($request->user()->profile);
@@ -301,7 +301,7 @@ class AuthController extends Controller
                 "image" => $imagepath
             ]))
             {
-                return response()->json(['status' => 200, 'message' => 'Profile updated succesfully'], 200); 
+                return response()->json(['status' => 200, 'message' => 'Profile updated succesfully'], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in profile update' ], 200);
         }
@@ -314,13 +314,13 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         try
-        { 
+        {
             $validator = Validator::make($request->all(), [
                 'email' => 'required',
                 'password' => 'required',
-            ]); 
+            ]);
             if ($validator->fails()) {
-                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
             $email = $request->input('email');
             $password = $request->input('password');
@@ -345,7 +345,7 @@ class AuthController extends Controller
                 $user->update(['device_token' => isset($request->device_token) ? $request->device_token : '']);
                 $data = userInfoResponse($user->id);
                 $data['token'] = $token;
-                return response()->json(['status' => 200, 'message' => 'Login Successs','data' => $data ], 200); 
+                return response()->json(['status' => 200, 'message' => 'Login Successs','data' => $data ], 200);
             }
             else
             {
@@ -355,18 +355,18 @@ class AuthController extends Controller
         catch(\Exception $e)
         {
             return response()->json(['status' => 201, 'message' => $e->getMessage() ], 500);
-        }        
+        }
     }
 
     public function forgetPassword(Request $request)
     {
         try
-        { 
+        {
             $validator = Validator::make($request->all(), [
                 'email'     => "required|email"
-            ]); 
+            ]);
             if ($validator->fails()) {
-                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
             if (! $user = User::where('email', $request->email)->select('id','active', 'firstname', 'lastname', 'email', 'phone')->first()) {
                 return response()->json(['status' => 201, 'message' => 'User not found' ], 200);
@@ -388,30 +388,31 @@ class AuthController extends Controller
              return response()->json(['status' => 201, 'message' => 'Error in send otp' ], 200);
             //  $token = Str::random(64);
             //  $user->sendPasswordResetNotification($token);
-            // return response()->json(['status' => 200, 'message' => 'Reset Link has been send to your registered email'], 200); 
+            // return response()->json(['status' => 200, 'message' => 'Reset Link has been send to your registered email'], 200);
         }
         catch(\Exception $e)
         {
             return response()->json(['status' => 201, 'message' => $e->getMessage() ], 500);
-        }        
+        }
     }
     public function socialLogin(Request $request)
     {
+
         try
-        { 
+        {
             $validator = Validator::make($request->all(), [
                 'social_id' => "required",
                 'socialtype'  => 'required',
                 'firstname'     => 'required',
                 //'lastname'      => 'required',
                 'email'         => "required|email",
-            ]); 
+            ]);
             if ($validator->fails()) {
-                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
             if( $user = User::where('email', $request->email)->select('id','device_token', 'email', 'social_id', 'socialtype')->first() )
             {
-                $token = $user->createToken('94b2f892-2c7c-4bf4-8043-cf9cf6cc4c70')->accessToken;
+               $token = $user->createToken('94b2f892-2c7c-4bf4-8043-cf9cf6cc4c70')->accessToken;
                 $user->update([
                     'device_token' => isset($request->device_token) ? $request->device_token : '',
                     'social_id' => isset($request->social_id) ? $request->social_id : '',
@@ -422,12 +423,12 @@ class AuthController extends Controller
                 return response()->json(['status' => 200, 'message' => 'Login Successs','data' => $data ], 200);
             }
             else if ($user = User::where('phone', $request->phone)->select('id','device_token', 'email', 'social_id', 'socialtype')->first()) {
-                $token = $user->createToken('94b2f892-2c7c-4bf4-8043-cf9cf6cc4c70')->accessToken;
                 $user->update([
                     'device_token' => isset($request->device_token) ? $request->device_token : '',
                     'social_id' => isset($request->social_id) ? $request->social_id : '',
                     'socialtype' => isset($request->socialtype) ? $request->socialtype : ''
                 ]);
+                $token = $user->createToken('94b2f892-2c7c-4bf4-8043-cf9cf6cc4c70')->accessToken;
                 $data = userInfoResponse($user->id);
                 $data['token'] = $token;
                 return response()->json(['status' => 200, 'message' => 'Login Successs','data' => $data ], 200);
@@ -451,59 +452,59 @@ class AuthController extends Controller
                     $data = userInfoResponse($user->id);
                     $data['token'] = $token;
                     $user->assignRole('User');
-                    return response()->json(['status' => 200, 'message' => 'Registered succesfull','data' => $data ], 200); 
+                    return response()->json(['status' => 200, 'message' => 'Registered succesfull','data' => $data ], 200);
                 }
                 return response()->json(['status' => 201, 'message' => 'Error in user registertion' ], 200);
             }
-            
+
             return response()->json(['status' => 201, 'message' => 'Error in user registertion' ], 200);
         }
         catch(\Exception $e)
         {
             return response()->json(['status' => 201, 'message' => $e->getMessage() ], 500);
-        }        
+        }
     }
 
     public function resetPassword(Request $request)
     {
          try
-        { 
+        {
             $validator = Validator::make($request->all(), [
                 'password' => 'required',
                 'email' => 'required',
-            ]); 
+            ]);
             if ($validator->fails()) {
-                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
 
             if (User::where('email','=', $request->email)->update([ 'password' => Hash::make($request->password)])) {
                 return response()->json(['status' => 200, 'message' => 'Password Reset Successfully' ], 200);
             }
             return response()->json(['status' => 201, 'message' => "Error in Reset Password" ], 200);
-            
+
         }
         catch(\Exception $e)
         {
             return response()->json(['status' => 201, 'message' => $e->getMessage() ], 500);
-        } 
+        }
     }
 
     public function receivedNotification(Request $request)
     {
         try
-        { 
+        {
             $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
                 'notified' => 'required',
-            ]); 
+            ]);
             if ($validator->fails()) {
-                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
             if(User::where('id', $userid)->update([
                 "notified" => $request->notified
             ]))
             {
-                return response()->json(['status' => 200, 'message' => 'Update Notification succesfull'], 200); 
+                return response()->json(['status' => 200, 'message' => 'Update Notification succesfull'], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in Notification update' ], 200);
         }
@@ -516,19 +517,19 @@ class AuthController extends Controller
     public function setLanguage(Request $request)
     {
         try
-        { 
+        {
             $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
                 'language' => 'required',
-            ]); 
+            ]);
             if ($validator->fails()) {
-                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200); 
+                return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
             if(User::where('id', $userid)->update([
                 "language" => $request->language
             ]))
             {
-                return response()->json(['status' => 200, 'message' => 'Update language succesfull'], 200); 
+                return response()->json(['status' => 200, 'message' => 'Update language succesfull'], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in language update' ], 200);
         }
@@ -542,7 +543,7 @@ class AuthController extends Controller
     {
         $user = $request->user()->token();
         if ($user->revoke()) {
-            return response()->json(['status' => 200, 'message' => 'Logout Successs',], 200); 
+            return response()->json(['status' => 200, 'message' => 'Logout Successs',], 200);
         }
         else
         {
