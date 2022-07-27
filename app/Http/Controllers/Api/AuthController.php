@@ -410,7 +410,7 @@ class AuthController extends Controller
             if ($validator->fails()) {
                 return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
-            if( $user = User::where('email', $request->email)->select('id','device_token', 'email', 'social_id', 'socialtype')->first() )
+            if(!empty($request->email) && $user = User::where('email', $request->email)->select('id','device_token', 'email', 'social_id', 'socialtype')->first() )
             {
                $token = $user->createToken('94b2f892-2c7c-4bf4-8043-cf9cf6cc4c70')->accessToken;
                 $user->update([
@@ -422,7 +422,7 @@ class AuthController extends Controller
                 $data['token'] = $token;
                 return response()->json(['status' => 200, 'message' => 'Login Successs','data' => $data ], 200);
             }
-            else if ($user = User::where('phone', $request->phone)->select('id','device_token', 'email', 'social_id', 'socialtype')->first()) {
+            else if (!empty($request->phone) && $user = User::where('phone', $request->phone)->select('id','device_token', 'email', 'social_id', 'socialtype')->first()) {
                 $user->update([
                     'device_token' => isset($request->device_token) ? $request->device_token : '',
                     'social_id' => isset($request->social_id) ? $request->social_id : '',
