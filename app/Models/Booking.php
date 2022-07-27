@@ -24,7 +24,9 @@ class Booking extends Model
     }
     public function vendorinfo()
     {
-        return $this->belongsTo('App\Models\VendorDetail', 'vendor_id', 'vendor_id')->select('id','vendor_id', 'firm_name',  DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo'));
+        return $this->belongsTo('App\Models\VendorDetail', 'vendor_id', 'vendor_id')->select('id','vendor_id', 'firm_name',  DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo'))->withDefault(function() {
+            return [];
+        });
     }
     public function serviceinfo()
     {
