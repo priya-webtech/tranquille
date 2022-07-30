@@ -65,7 +65,7 @@ class UserController extends Controller
         try {
             $userid = $request->user()->id;
             $data = Notification::where('user_id', $userid)
-                        ->select('id','type', 'title', 'message', 'is_seen', 'created_at', 'booking_id', 'status')
+                        ->select('id','type', 'type_id', 'title', 'message', 'is_seen', 'created_at', 'booking_id', 'status')
                         ->paginate(25);
             if ($data) {
                 return response()->json(['status' => 200, 'message' => 'Data retrieved successfully', 'data' => $data ], 200);
@@ -254,4 +254,5 @@ class UserController extends Controller
             return response()->json(['status' => 201, 'message' => $e->getMessage()], 500);
         }
     }
+
 }

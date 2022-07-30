@@ -626,6 +626,18 @@ class BookingController extends Controller
                 $data['rejected'] = ($data->status_id == 8) ? true : false ;
                 $data['rate'] = ($data->status_id ==7) ? true : false ;
                 $data['reschedule'] = ($data->status_id == 10) ? true : false ;
+
+                $booking = Booking::find($request->booking_id);
+                $notification = new Notification();
+                $notification->type = 'Review and Rating';
+                $notification->type_id = $booking->id;
+                $notification->user_id = $booking->user_id;
+                $notification->title = "Review & Rating";
+                $notification->message = "Please Rate & Review for the your last booking ". $booking->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
+
+
                 return response()->json(['status' => 200, 'message' => 'Booking Completed successfully','data' => $data ], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in Booking Completed' ], 200);
