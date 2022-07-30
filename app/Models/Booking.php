@@ -18,15 +18,14 @@ class Booking extends Model
         'active', 'user_id', 'vendor_id', 'employee_id', 'service_id', 'treatment_id', 'address_id', 'booking_date', 'booking_time', 'orderid', 'start_time', 'expct_end_time', 'end_time', 'expct_amount', 'full_amount', 'discount_amount', 'final_amount', 'canceled', 'canceled_reson', 'user_name', 'address', 'latitude', 'longitude', 'status_id', 'created_by', 'updated_by', 'deleted_by', 'deleted_at', 'created_at', 'updated_at', 'transaction_id' , 'payment_id'
     ];
 
+
     public function userinfo()
     {
         return $this->belongsTo('App\Models\User', 'user_id', 'id')->select('id','name', 'email', 'firstname', 'lastname', DB::raw('CONCAT("'.URL::to('/').'", "/public/", profile) AS profile') );
     }
     public function vendorinfo()
     {
-        return $this->belongsTo('App\Models\VendorDetail', 'vendor_id', 'vendor_id')->select('id','vendor_id', 'firm_name',  DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo'))->withDefault(function() {
-            return [];
-        });
+        return $this->belongsTo('App\Models\VendorDetail', 'id', 'vendor_id')->select('id','vendor_id', 'firm_name',  DB::raw('CONCAT("'.URL::to('/').'", "/public/", logo) AS logo'));
     }
     public function serviceinfo()
     {

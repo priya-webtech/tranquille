@@ -20,10 +20,14 @@ class RefferController extends Controller
             return datatables()->of(ReferralEarn::with('byinfo', 'toinfo')->select('*'))
                 ->addIndexColumn()
                 ->addColumn('byname', function ($query) {
-                    return $query['byinfo']['firstname'];
+                    if(!empty($query['byinfo'])) {
+                        return $query['byinfo']['firstname'];
+                    }
                 })
                 ->addColumn('toname', function ($query) {
-                    return $query['toinfo']['firstname'];
+                    if(!empty($query['toinfo'])) {
+                        return $query['toinfo']['firstname'];
+                    }
                 })
                 ->addColumn('action', function ($query) {
                     return '<div class="d-flex align-items-center">

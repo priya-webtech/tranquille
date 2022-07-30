@@ -23,7 +23,9 @@ class ApprovalController extends Controller
             return datatables()->of(User::with('vendordetails')->select('*')->where('type', '=', 'Provider')->where('active', '=', 'N'))
                 ->addIndexColumn()
                 ->editColumn('logo', function ($query) {
-                    return '<img src="' . asset(isset($query['vendordetails']['logo']) ? $query['vendordetails']['logo'] : 'assets/image/dummy.png') . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['vendordetails']['firm_name'];
+                    if(!empty($query['vendordetails'])) {
+                        return '<img src="' . asset(isset($query['vendordetails']['logo']) ? $query['vendordetails']['logo'] : 'assets/image/dummy.png') . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['vendordetails']['firm_name'];
+                    }
                 })
                 ->editColumn('ownername', function ($query) {
                     return  $query['firstname'] . ' ' . $query['lastname'];
