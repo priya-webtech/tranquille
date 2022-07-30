@@ -27,7 +27,9 @@
     <link rel="stylesheet" href="{{url('/') . '/' . asset('assets/css/plugins/bootstrap-timepicker.min.css')}}">
 
     @livewireStyles
+    <script src="{{ mix('/js/app.js') }}" defer></script>
     <script src="{{ url('/') . '/' . asset('assets/js/vendor-all.min.js') }}"></script>
+
 </head>
 
 <body class="">
@@ -44,7 +46,6 @@
                 </div>
                 <!-- <i data-feather="menu"></i> -->
             </a>
-
             <a href="#!" class="pc-head-link" id="header-collapse">
                 <i data-feather="more-vertical"></i>
             </a>
@@ -59,7 +60,7 @@
                 {{ $slot }}
             </div>
         </div>
-        
+
     </main>
     <footer class="bg-dark pt-3 pb-4 m-t-50">
                 <div class="baseurl" data-baseurl="{{ url('/') }}"></div>
@@ -102,7 +103,7 @@
             $('.js-example-basic-single').select2();
         });
 
-        // 
+        //
         $.fn.timepicker.defaults = $.extend(true, {}, $.fn.timepicker.defaults, {
         icons: {
             up: 'feather icon-chevron-up',

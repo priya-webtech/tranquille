@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin\Corporate;
+use App\Models\Admin\Student;
+use App\Models\Contactus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Permission\Models\Role;
@@ -327,4 +332,62 @@ class UserController extends Controller
                 ->make(true);
         }
     }
+
+    public function notifications()
+    {
+        if(Auth::user()->type == 'Admin'){
+
+           // return $user->unreadNotifications()->orderBy('created_at', 'desc')->limit(5)->get()->toArray();
+            $a = Contactus::select('id','name','created_at', DB::raw("'Contactus' AS `type`"));
+            $b = Membership::select('id','user_id','created_at', DB::raw("'Membership' AS `type`"));
+            $cont = VendorDetail::select('id','firm_name','created_at', DB::raw("'Vendor' AS `type`"))
+                ->union($a)
+                ->union($b)
+                ->orderBy('created_at', 'desc')->limit(5)->get();
+           foreach ($cont as $key=>$c){
+               if($c->type == "Contactus"){
+                  $msg= 'New Request for Support from '.$c->firm_name;
+                  // $cont[$key]['name']= "<a href='{{route('contactus')}}'>'New Request for Support from '.$c->firm_name</a>";
+                   $cont[$key]['name']= '<a href="'.route('contactus.index') .'">' .$msg . '</a>';
+               }elseif ($c->type == "Membership"){
+                   $user = VendorDetail::where('vendor_id',$c->firm_name)->first();
+                   $name = $user->firm_name ?? "N/A";
+                   $msg =  $name.' has purchased a new membership Plan';
+                   $cont[$key]['name']= '<a href="'.route('membership.index') .'">' .$msg . '</a>';
+               }elseif ($c->type == 'Vendor'){
+                   $msg =  $c->firm_name.' has requested for approval for Salon Registration';
+                   $cont[$key]['name']= '<a href="'.route('vendorApproval.index') .'">' .$msg . '</a>';
+               }
+           }
+            return $cont->toArray();
+        }
+    }
+    public function get_latest_notification()
+    {
+        if(Auth::user()->type == 'Admin'){
+            $a = Contactus::select('id','name','created_at', DB::raw("'Contactus' AS `type`"));
+            $b = Membership::select('id','user_id','created_at', DB::raw("'Membership' AS `type`"));
+            $query = VendorDetail::select('id','firm_name','created_at', DB::raw("'Vendor' AS `type`"))
+                ->union($a)
+                ->union($b)
+                ->orderBy('created_at', 'desc')->first();
+
+            if($query->type == "Contactus"){
+                $msg= 'New Request for Support from '.$query->firm_name;
+                $query['name']= '<a href="'.route('contactus.index') .'">' .$msg . '</a>';
+            }elseif ($query->type == "Membership"){
+                $user = VendorDetail::where('vendor_id',$query->firm_name)->first();
+                $name = $user->firm_name ?? "N/A";
+                $msg= $name.' has purchased a new membership Plan';
+                $query['name']= '<a href="'.route('membership.index') .'">' .$msg . '</a>';
+            }elseif ($query->type == 'Vendor'){
+                $msg= $query->firm_name.' has requested for approval for Salon Registration';
+                $query['name']= '<a href="'.route('vendorApproval.index') .'">' .$msg . '</a>';
+            }
+            return $query->toArray();
+            //return $user->unreadNotifications()->orderBy('created_at', 'desc')->first();
+        }
+
+    }
+
 }

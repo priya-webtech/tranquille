@@ -37,6 +37,8 @@ use App\Http\Controllers\PolicyController;
 Route::get('/', function () {
     return view('auth.login');
 });
+Route::get('notifications', [UserController::class, 'notifications']);
+Route::get('latest-notification', [UserController::class, 'get_latest_notification']);
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', function () {
@@ -51,7 +53,7 @@ Route::group(['middleware' => ['auth']], function () {
     /*=== Users Route ===*/
     Route::resource('dashboard', CommonController::class, ['except' => ['create', 'update']]);
     Route::get('/changePassword', [CommonController::class, 'showChangePasswordGet'])->name('changePasswordGet');
-    Route::post('/changePassword', [CommonController::class, 'changePasswordPost'])->name('changePasswordPost');   
+    Route::post('/changePassword', [CommonController::class, 'changePasswordPost'])->name('changePasswordPost');
     // Route::any('toptenvendor', [CommonController::class, 'toptenvendor']);
     /*=== Users Route ===*/
     Route::resource('users', UserController::class, ['except' => ['create', 'update']]);
