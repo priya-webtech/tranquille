@@ -103,7 +103,7 @@ class AuthController extends Controller
                             'referral_date' => date('Y-m-d'),
                     ]);
                 }
-                return response()->json(['status' => 200, 'message' => 'Registered succesfull', 'data' => $data, 'otp' => $otp], 200);
+                return response()->json(['status' => 200, 'message' => 'Registered successful', 'data' => $data, 'otp' => $otp], 200);
             }
 
             return response()->json(['status' => 201, 'message' => 'Error in user registertion'], 200);

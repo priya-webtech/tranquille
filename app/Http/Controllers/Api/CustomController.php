@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\SendNotification;
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Services;
@@ -81,11 +83,11 @@ class CustomController extends Controller
                                         })
                                         ->select('id','brand_name',DB::raw('CONCAT("'.URL::to('/').'/public/", brand_image) AS brand_image '))
                                         ->get();
-            if(count($products) > 0)
-            {
+//            if(count($products) > 0)
+//            {
                 return response()->json(['status' => 200,'message' => 'Product successfully retrieved','data' => $products ], 200);
-            }
-            return response()->json(['status' => 201,'message' => 'Error in Product retrieved' ], 200);
+//            }
+//            return response()->json(['status' => 201,'message' => 'Error in Product retrieved' ], 200);
 
         } catch(\Exception $e) {
             return response()->json(['status' => 201,'message' => $e->getMessage() ], 200);
@@ -134,7 +136,11 @@ class CustomController extends Controller
                 'email' => isset($request->email) ? $request->email : '',
                 'phone' => isset($request->phone) ? $request->phone : null,
             ])) {
+
+                broadcast(new \App\Events\SendNotification($data))->toOthers();
                 return response()->json(['status' => 200, 'message' => 'Contact us Added succesfully','data' => $data ], 200);
+//                "Vendor_Name" or "Customer_Name"
+
             }
             return response()->json(['status' => 201, 'message' => 'Error in Contact us' ], 200);
         }
@@ -208,9 +214,9 @@ class CustomController extends Controller
                                 $start_date = !empty($activemembership) ? strtotime($activemembership['start_date']) : strtotime(date("Y-m-d")) ;
                                 $plandays = ($end_date - $start_date) / (60 * 60 * 24);
                                 $item['quarterly_monthly'] =  number_format(($item->monthly_price / 3), 2);
-                                $item['yearly_monthly'] = number_format(($item->yearly_price / 12), 2); 
-                                $item['quarterly'] = (!empty($activemembership) && $activemembership['plan_id'] === $item['id'] && $plandays >= 80 && $plandays <= 100) ? true : false; 
-                                $item['yearly'] =  (!empty($activemembership) && $activemembership['plan_id'] === $item['id'] && $plandays >= 200 && $plandays <= 370) ? true : false; 
+                                $item['yearly_monthly'] = number_format(($item->yearly_price / 12), 2);
+                                $item['quarterly'] = (!empty($activemembership) && $activemembership['plan_id'] === $item['id'] && $plandays >= 80 && $plandays <= 100) ? true : false;
+                                $item['yearly'] =  (!empty($activemembership) && $activemembership['plan_id'] === $item['id'] && $plandays >= 200 && $plandays <= 370) ? true : false;
                                 return $item;
                             });
                 return response()->json(['status' => 200,'message' => 'SubscriptionPlan successfully retrieved','data' => $subscription ], 200);

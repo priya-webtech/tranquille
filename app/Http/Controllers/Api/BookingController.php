@@ -108,13 +108,13 @@ class BookingController extends Controller
 
                 if($isworking) {
 
-                    
+
                     while ($start < $end)
     				{
                         $blocktime = $blocktimes->where('booking_time','<',date('H:i:s',strtotime('+15 minutes',$start)))->where('expct_end_time', '>', date('Y-m-d H:i:s',strtotime($request->booking_date.' '.date('H:i:s',$start))))->first();
-                        
 
-                        if(empty($blocktime)) 
+
+                        if(empty($blocktime))
                         {
 
                             $existbooking = $bookings->where('booking_time','=',date('H:i:s',$start))->first() ;
@@ -147,6 +147,7 @@ class BookingController extends Controller
             $validator = Validator::make($request->all(), [
                 'vendor_id' 	=> 'required|exists:vendor_details,vendor_id',
                 'service_id' 	=> 'required|exists:services,id',
+                'status_id' 	=> 'required|exists:statuses,id',
                 'treatment_id' 	=> 'required|exists:treatments,id',
                 'employee_id' 	=> 'required|exists:vendor_teams,id',
                 'address_id' 	=> 'nullable|exists:addresses,id',
@@ -332,7 +333,7 @@ class BookingController extends Controller
         }
         $token = generatestripeToken($request->amount);
 
-        return response()->json(['status' => 200,'message' => 'Payment succesfull','data' => $token ], 200); 
+        return response()->json(['status' => 200,'message' => 'Payment succesfull','data' => $token ], 200);
     }
 
     public function customerUpcomingBooking(Request $request)
@@ -504,7 +505,7 @@ class BookingController extends Controller
                         ->latest()
                         ->paginate(70);
             if($payments) {
-                $monthly = Payment::where('vendor_id','=', $userid)->where('status','=', 5)->whereBetween('transaction_at', 
+                $monthly = Payment::where('vendor_id','=', $userid)->where('status','=', 5)->whereBetween('transaction_at',
                             [Carbon::now()->subYear(), Carbon::now()]
                         )->select( DB::raw('sum(amount) as earning'), DB::raw("DATE_FORMAT(transaction_at,'%M') as month"), DB::raw("DATE_FORMAT(transaction_at,'%Y') as year"))->groupBy('year','month')->get();
 
@@ -529,7 +530,7 @@ class BookingController extends Controller
 
     public function deleteTransection(Request $request)
     {
-        try 
+        try
         {
             $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
@@ -1006,7 +1007,7 @@ class BookingController extends Controller
                             $startDay = 0;
                             break;
                     }
-                    
+
                     $value['startDay'] = $startDay;
                     // $value['cancel'] = ($value->status_id == 2) ? true : false ;
                     // $value['done'] =    ($value->status_id == 11) ? true : false ;
@@ -1149,7 +1150,7 @@ class BookingController extends Controller
             }
 
 
-            
+
 
             $blocktime = DB::table('blocktime')->where('vendor_id', $userid)
                         ->where(function ($query) use($start_date, $end_date, $employee_id) {
@@ -1180,8 +1181,8 @@ class BookingController extends Controller
                 $bookings->getCollection()->transform(function ($value) use($workings, $start_date, $blocktime) {
                             $appointments = collect([]);
                             foreach ($value->appointments as $key => $bookingrows) {
-                                $collection = collect(['id' => $bookingrows->id, 
-                                    'employee_id' => $bookingrows->employee_id, 
+                                $collection = collect(['id' => $bookingrows->id,
+                                    'employee_id' => $bookingrows->employee_id,
                                     'booking_date' => $bookingrows->booking_date,
                                     'booking_time' => $bookingrows->booking_time,
                                     'final_amount' => $bookingrows->final_amount,
@@ -1194,8 +1195,8 @@ class BookingController extends Controller
                                 $appointments->push($collection);
                             }
                             foreach ($blocktime->where('employee_id',$value->id) as $row => $blockrows) {
-                               $collection2 = collect(['id' => $blockrows->id, 
-                                    'employee_id' => $blockrows->employee_id, 
+                               $collection2 = collect(['id' => $blockrows->id,
+                                    'employee_id' => $blockrows->employee_id,
                                     'booking_date' => $blockrows->booking_date,
                                     'booking_time' => $blockrows->booking_time,
                                     'final_amount' => $blockrows->final_amount,
@@ -1318,7 +1319,7 @@ class BookingController extends Controller
                 ]);
             }
             $booking = DB::table('blocktime')->insert($data->toArray());
-            if ($booking) 
+            if ($booking)
             {
                 return response()->json(['status' => 200, 'message' => 'Data successfully retrieved', 'data' => $booking ], 200);
             }

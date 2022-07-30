@@ -75,6 +75,8 @@ class MembershipController extends Controller
                 $membership = Membership::where('id', $request['id'])->update($request->except(['_token', '_method']));
             } else {
                 $membership = Membership::create($request->except(['_token']));
+                $data = $membership;
+                broadcast(new \App\Events\SendNotification($data))->toOthers();
             }
             if ($membership) {
                 return redirect()->to('membership')->with('message_success', 'Data Store Successfully');

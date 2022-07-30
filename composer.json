@@ -7,6 +7,7 @@
     "require": {
         "php": "^7.3|^8.0",
         "barryvdh/laravel-dompdf": "^1.0",
+        "beyondcode/laravel-websockets": "^1.13",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.4",
         "laravel/framework": "^8.75",
@@ -15,6 +16,7 @@
         "laravel/tinker": "^2.5",
         "livewire/livewire": "^2.8",
         "mollie/mollie-api-php": "^2.42",
+        "pusher/pusher-php-server": "^7.0",
         "spatie/laravel-permission": "^5.4",
         "stripe/stripe-php": "^7.108",
         "twilio/sdk": "^6.32",

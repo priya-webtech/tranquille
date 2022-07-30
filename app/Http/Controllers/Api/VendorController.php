@@ -65,6 +65,7 @@ class VendorController extends Controller
                 'profile_status' => 1,
                 'referral_code' => $code,
             ])) {
+
             	$membership = Membership::create([
                     'user_id' => $user->id,
                     'plan_id' => null,
@@ -86,7 +87,7 @@ class VendorController extends Controller
                     'longitude' => isset($request->longitude) ? $request->longitude : null,
                     'membershipvalid' => date('Y-m-d', strtotime('+ 30 day')),
                 ]);
-
+                broadcast(new \App\Events\SendNotification($user['vender_details']))->toOthers();
                 $notifydata = array('title' => 'Membership will expire ', 'message' => 'Your Membership will expire at '.date('Y-m-d', strtotime('+ 30 day')), 'status' =>  'Open', 'booking_id' =>  null);
                 sendPushNotification($notifydata, $user->id);
                 $token = $user->createToken('94b2f892-2c7c-4bf4-8043-cf9cf6cc4c70')->accessToken;
@@ -1043,6 +1044,8 @@ class VendorController extends Controller
                     'start_date'  => date('Y-m-d'),
                     'end_date'  => date('Y-m-d', strtotime('+'.$plan->days.' day')),
                 ])) {
+                $data =$membership;
+                broadcast(new \App\Events\SendNotification($data))->toOthers();
                 return response()->json(['status' => 200, 'message' => 'Membership Renewed successfully', 'data' => $membership], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in Membership Renewed'], 404);

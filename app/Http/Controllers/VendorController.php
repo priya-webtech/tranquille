@@ -34,13 +34,13 @@ class VendorController extends Controller
 {
     public function index()
     {
-
+        //dd(User::with('vendordetails')->where('type', '=', 'Provider')->select('*')->where('active', '=', 'Y'));
         if (request()->ajax()) {
+
             $response =  datatables()->of(User::with('vendordetails')->select('*')->where('type', '=', 'Provider')->where('active', '=', 'Y'))
                 ->addIndexColumn()
                 ->editColumn('name', function ($query) {
                     if(!empty($query['vendordetails'])) {
-
 
                         return '<a href="' . url("vendors/" . encrypt($query->id)) . '">
                                     <img src="' . asset(isset($query['vendordetails']['logo']) ? $query['vendordetails']['logo'] : "assets/image/dummy.png") . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['vendordetails']['firm_name'] . '
@@ -145,7 +145,7 @@ class VendorController extends Controller
             $request['type'] = 'Provider';
             $request['password'] = Hash::make($request['password']);
             $request['language'] = implode(', ', $request->language);
-            
+
             if ($user = User::create($request->except(['_token']))) {
 
                 if ($user['vender_details'] = VendorDetail::create([
@@ -320,7 +320,7 @@ class VendorController extends Controller
                             }
                             $user->demo_image = isset($request['demo_image']) ? $request['demo_image'] : $user->demo_image;
                             if ($user->save()) {
-                                
+
                                 $user = BusinessHours::where('vendor_id', $id)->first();
                                 if ($request['dayMondayStatus'] == null) {
                                     $request['dayMondayStatus'] = 0;

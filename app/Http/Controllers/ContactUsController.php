@@ -67,11 +67,16 @@ class ContactUsController extends Controller
                 $user->email = isset($request->email) ? $request->email : '';
                 $user->phone = isset($request->phone) ? $request->phone : '';
                 $user->save();
+                $data = $user;
+
             } else {
                 $user = Contactus::create($request->except(['_token']));
+                $data = $user;
+                broadcast(new \App\Events\SendNotification($data))->toOthers();
             }
             if ($user) {
                 return redirect()->to('contactus')->with('message_success', 'Data Store Successfully');
+
             }
             return redirect()->back()->with('message_danger', 'Error in Data Store')->withInput();
         } catch (\Exception $e) {
