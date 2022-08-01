@@ -64,7 +64,7 @@ class UserController extends Controller
     {
         try {
             $userid = $request->user()->id;
-            $data = Notification::where('user_id', $userid)
+            $data = Notification::where('user_id', $userid)->where('is_seen', 0)
                         ->select('id','type', 'type_id', 'title', 'message', 'is_seen', 'created_at', 'booking_id', 'status')
                         ->paginate(25);
             if ($data) {
