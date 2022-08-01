@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\BusinessHours;
@@ -19,6 +20,8 @@ class ApprovalController extends Controller
      */
     public function index()
     {
+
+
         if (request()->ajax()) {
             return datatables()->of(User::with('vendordetails')->select('*')->where('type', '=', 'Provider')->where('active', '=', 'N'))
                 ->addIndexColumn()

@@ -39,6 +39,7 @@ Route::get('/', function () {
 });
 Route::get('notifications', [UserController::class, 'notifications']);
 Route::get('latest-notification', [UserController::class, 'get_latest_notification']);
+Route::get('reed-notification', [UserController::class, 'reedNotification'])->name('reed-notification');
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', function () {

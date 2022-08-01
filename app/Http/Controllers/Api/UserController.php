@@ -50,7 +50,7 @@ class UserController extends Controller
                             ->select('id','service_id', 'treatment_name',DB::raw('CONCAT("'.URL::to('/').'/public/", treatment_image) AS treatment_image '), DB::raw('CONCAT("'.URL::to('/').'/public/", small_image) AS small_image '))
                             ->get();
 
-            if($data) 
+            if($data)
             {
                 return response()->json(['status' => 200, 'message' => 'Data retrieved successfully', 'data' => $data], 200);
             }
@@ -75,6 +75,20 @@ class UserController extends Controller
             return response()->json(['status' => 201, 'message' => $e->getMessage()], 500);
         }
     }
+
+    public function notificationSeen(Request $request)
+    {
+        try {
+            $userid = $request->user()->id;
+            if ($userid) {
+                Notification::where('user_id',$userid)->update(['is_seen'=>1]);
+                return response()->json(['status' => 200, 'message' => 'Notification Seen'], 200);
+            }
+            return response()->json(['status' => 201, 'message' => 'Error in data retrieved'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 201, 'message' => $e->getMessage()], 500);
+        }
+     }
     public function dashboardServices(Request $request)
     {
 

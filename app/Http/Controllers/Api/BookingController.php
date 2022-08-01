@@ -196,6 +196,16 @@ class BookingController extends Controller
                 $data['rejected'] = ($this->rejectedstatus->contains($data->status_id) && $data->vendor_id == $userid) ? true : false ;
                 $data['rate'] = ($this->ratestatus->contains($data->status_id) && $data->user_id == $userid) ? true : false ;
                 $data['reschedule'] =($this->reschedulestatus->contains($data->status_id) && $data->user_id == $userid) ? true : false ;
+                $user = User::find($booking->user_id);
+                $notification = new Notification();
+                $notification->title = 'Booking Request';
+                $notification->message = 'New request from '.$user->name;
+                $notification->type = 'Appointment';
+                $notification->user_id  = $booking->vendor_id;
+                $notification->type_id  = $booking->id;
+                $notification->booking_id   = $booking->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
                 $notifydata = array('title' => 'Hey, “'.$request->user()->name.'” made a booking at “'.$request->booking_date.' '.$request->booking_time .'”? Just more appealing to eye and easier to check if user calls vendor for any reasons', 'message' => date('d-m-Y',strtotime($request->booking_date)), 'status' =>  'Open', 'booking_id' =>  $booking->id);
                 sendPushNotification($notifydata, $request->vendor_id);
 
@@ -229,6 +239,7 @@ class BookingController extends Controller
             }
             $booking->status_id = $status;
             if ($booking->save()) {
+
                 return response()->json(['status' => 200, 'message' => 'Booking status updated successfully','data' => $booking ], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in Booking' ], 200);
@@ -423,6 +434,7 @@ class BookingController extends Controller
                     $value['booking_time'] = date('H:i', strtotime($value['booking_time']));
                     return $value;
                 });
+
                 return response()->json(['status' => 200, 'message' => 'Data successfully retrieved', 'data' => $bookings ], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in data retrieved'], 404);
@@ -586,6 +598,7 @@ class BookingController extends Controller
                     'canceled'  => true,
                     'canceled_reson'  => isset($request->canceled_reson) ? $request->canceled_reson : '',
                 ])) {
+
                 $data = bookingInfoData($request->booking_id);
                 $data['pending'] = ($data->status_id == 3) ? true : false ;
                 $data['cancel'] = ($data->status_id == 2) ? true : false ;
@@ -637,7 +650,6 @@ class BookingController extends Controller
                 $notification->created_at = date('d-m-Y H:i:s');
                 $notification->save();
 
-
                 return response()->json(['status' => 200, 'message' => 'Booking Completed successfully','data' => $data ], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in Booking Completed' ], 200);
@@ -669,6 +681,24 @@ class BookingController extends Controller
                 $data['rejected'] = ($data->status_id == 8) ? true : false ;
                 $data['rate'] = ($data->status_id ==7) ? true : false ;
                 $data['reschedule'] = ($data->status_id == 10) ? true : false ;
+                $notification = new Notification();
+
+                $notification->title = 'Booking Cancel';
+                $notification->message = 'Your booking has been cancelled.';
+                $notification->type = 'My Appointment';
+                $notification->user_id = $booking->user_id;
+                $notification->type_id = $booking->id;
+                $notification->booking_id = $booking->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
+                $notification->title = 'Booking Cancel';
+                $notification->message = 'A Booking has been cancelled.';
+                $notification->type = 'Appointment';
+                $notification->user_id = $booking->vendor_id;
+                $notification->type_id = $booking->id;
+                $notification->booking_id = $booking->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
                 $notifydata = array('title' => 'Your Booking has been canceled', 'message' => date('d-m-Y',strtotime($data->booking_date)), 'status' =>  'Open', 'booking_id' =>  $data->id);
                 sendPushNotification($notifydata, $data->vendor_id);
                 return response()->json(['status' => 200, 'message' => 'Booking Rejected successfully','data' => $data ], 200);
@@ -703,7 +733,17 @@ class BookingController extends Controller
                 $data['rejected'] = ($data->status_id == 8) ? true : false ;
                 $data['rate'] = ($data->status_id ==7) ? true : false ;
                 $data['reschedule'] = ($data->status_id == 10) ? true : false ;
+                $vendor = VendorDetail::find($booking->vendor_id);
+                $notification = new Notification();
 
+                $notification->title = 'Booking accepted';
+                $notification->message = $vendor->firm_name . 'has accepted your booking.';
+                $notification->type = 'My Appointment';
+                $notification->user_id = $booking->user_id;
+                $notification->type_id = $booking->id;
+                $notification->booking_id = $booking->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
                 $notifydata = array('title' => 'Hey, Your booking has been Accepted ', 'message' => date('d-m-Y',strtotime($data->booking_date)), 'status' =>  'Accepted', 'booking_id' =>  $data->id);
                 sendPushNotification($notifydata, $data->user_id);
                 return response()->json(['status' => 200, 'message' => 'Booking Rejected successfully','data' => $data ], 200);
@@ -746,6 +786,16 @@ class BookingController extends Controller
                 $data['rejected'] = ($data->status_id == 8) ? true : false ;
                 $data['rate'] = ($data->status_id ==7) ? true : false ;
                 $data['reschedule'] = ($data->status_id == 10) ? true : false ;
+                $user = User::find($booking->user_id);
+                $notification = new Notification();
+                $notification->title = 'Customer rescheduled booking';
+                $notification->message = $user->name.'has a reschedule request.';
+                $notification->type = 'Appointment';
+                $notification->user_id  = $booking->vendor_id;
+                $notification->type_id  = $booking->id;
+                $notification->booking_id  = $booking->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
                 return response()->json(['status' => 200, 'message' => 'Booking Reschedule successfully','data' => $data ], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in Booking Reschedule' ], 200);
@@ -820,6 +870,7 @@ class BookingController extends Controller
                 $data['rejected'] = ($this->rejectedstatus->contains($data->status_id) && $data->vendor_id == $userid) ? true : false ;
                 $data['rate'] = ($this->ratestatus->contains($data->status_id) && $data->user_id == $userid) ? true : false ;
                 $data['reschedule'] =($this->reschedulestatus->contains($data->status_id) && $data->user_id == $userid) ? true : false ;
+
                 return response()->json(['status' => 200, 'message' => 'Booking Reschedule successfully','data' => $data ], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in Booking Reschedule' ], 200);

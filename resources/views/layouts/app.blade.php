@@ -134,7 +134,21 @@
             orientation: "bottom left",
             templates: arrows
         });
+        {{--function seenNotification() {--}}
+        {{--    $.ajax({--}}
+        {{--        type: 'GET',--}}
+        {{--        url: "{{route('reed-notification')}}",--}}
+        {{--        // data: {'trainerID': trainerID},--}}
+        {{--        dataTypes: 'json',--}}
+        {{--        success: function (res) {--}}
+        {{--            if (res) {--}}
+        {{--                $(".number").text(0);--}}
+        {{--            }--}}
+        {{--        }--}}
+        {{--    });--}}
+        {{--}--}}
     </script>
+
 </body>
 
 </html>

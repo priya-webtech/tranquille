@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Gate;
@@ -19,6 +20,9 @@ class MembershipController extends Controller
      */
     public function index(Request $request)
     {
+        if(\request('id')){
+            Notification::where('id',\request('id'))->update(['is_seen'=>1]);
+        }
         // //abort_if(Gate::denies('membership_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
         if (request()->ajax()) {
             return datatables()->of(Membership::with('userinfo', 'subscriptioninfo')->select('*'))
