@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\Contactus;
 
@@ -14,6 +15,9 @@ class ContactUsController extends Controller
      */
     public function index()
     {
+        if(\request('id')){
+            Notification::where('id',\request('id'))->update(['is_seen'=>1]);
+        }
         if (request()->ajax()) {
             return datatables()->of(Contactus::select('*'))
                 ->addIndexColumn()

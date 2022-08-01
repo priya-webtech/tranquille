@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use App\Models\User;
@@ -87,7 +88,24 @@ class VendorController extends Controller
                     'longitude' => isset($request->longitude) ? $request->longitude : null,
                     'membershipvalid' => date('Y-m-d', strtotime('+ 30 day')),
                 ]);
-                broadcast(new \App\Events\SendNotification($user['vender_details']))->toOthers();
+                $notification = new Notification();
+                $notification->title = 'Membership expire';
+                $notification->message = 'Your Membership will expire at '.date('Y-m-d', strtotime('+ 30 day'));
+                $notification->type = 'Membership Plan';
+                $notification->user_id  = $user['vender_details']['vendor_id'];
+                $notification->type_id  = $membership->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
+                $admin = User::where('type','Admin')->first();
+                $notification = new Notification();
+                $notification->title = 'New Vendor Registration';
+                $notification->message = $user['vender_details']['firm_name'].' has requested for approval for Salon Registration.';
+                $notification->type = 'Approval List';
+                $notification->user_id  = $admin->id;
+                $notification->type_id  =  $user['vender_details']['vendor_id'];
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
+                broadcast(new \App\Events\SendNotification($notification))->toOthers();
                 $notifydata = array('title' => 'Membership will expire ', 'message' => 'Your Membership will expire at '.date('Y-m-d', strtotime('+ 30 day')), 'status' =>  'Open', 'booking_id' =>  null);
                 sendPushNotification($notifydata, $user->id);
                 $token = $user->createToken('94b2f892-2c7c-4bf4-8043-cf9cf6cc4c70')->accessToken;
@@ -1044,7 +1062,26 @@ class VendorController extends Controller
                     'start_date'  => date('Y-m-d'),
                     'end_date'  => date('Y-m-d', strtotime('+'.$plan->days.' day')),
                 ])) {
-                $data =$membership;
+
+                $notification = new Notification();
+                $notification->title = 'Membership purchased';
+                $notification->message = 'Congratulations, You have successfully purchased the membership.';
+                $notification->type = 'Membership Plan';
+                $notification->user_id  = $membership->vendor_id;
+                $notification->type_id  = $membership->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
+                $AsminId = User::where('type','Admin')->first();
+                $vendor = VendorDetail::where('vendor_id',$userid)->first();
+                $notification = new Notification();
+                $notification->title = 'Membership purchased';
+                $notification->message = $vendor->firm_name.' has purchased a new membership Plan ';
+                $notification->type = 'Membership';
+                $notification->user_id  = $AsminId->id;
+                $notification->type_id  =  $membership->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
+                $data = $notification;
                 broadcast(new \App\Events\SendNotification($data))->toOthers();
                 return response()->json(['status' => 200, 'message' => 'Membership Renewed successfully', 'data' => $membership], 200);
             }

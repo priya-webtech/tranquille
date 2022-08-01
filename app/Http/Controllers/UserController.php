@@ -158,6 +158,9 @@ class UserController extends Controller
 
     public function approval(Request $request)
     {
+        if(\request('id')){
+            Notification::where('id',\request('id'))->update(['is_seen'=>1]);
+        }
         if (request()->ajax()) {
             return datatables()->of(User::with('vendordetails')->select('*')->where('type', '=', 'Provider')->where('active', '=', 'N'))
                 ->addIndexColumn()
@@ -335,59 +338,45 @@ class UserController extends Controller
 
     public function notifications()
     {
-        if(Auth::user()->type == 'Admin'){
+        if(Auth::user()->type == 'Admin') {
+            $notifications = Notification::where('is_seen', 0)->where('user_id', Auth::id())->orderBy('created_at', 'desc')->get()->toArray();
+            foreach ($notifications as $key => $notification) {
+                if ($notification['title'] == 'Contact us') {
+                    $notifications[$key]['name'] = '<a href="' . route('contactus.index') . '?id='.$notification['id'].'">' . $notification['message'] . '</a>';
+                } elseif ($notification['title'] == 'Membership purchased') {
+                    $notifications[$key]['name'] = '<a href="' . route('membership.index') . '?id='.$notification['id'].'">' . $notification['message'] . '</a>';
+                } elseif ($notification['title'] == 'New Vendor Registration') {
+                    $notifications[$key]['name'] = '<a href="' . route('approval') . '?id='.$notification['id'].'">' . $notification['message'] . '</a>';
 
-           // return $user->unreadNotifications()->orderBy('created_at', 'desc')->limit(5)->get()->toArray();
-            $a = Contactus::select('id','name','created_at', DB::raw("'Contactus' AS `type`"));
-            $b = Membership::select('id','user_id','created_at', DB::raw("'Membership' AS `type`"));
-            $cont = VendorDetail::select('id','firm_name','created_at', DB::raw("'Vendor' AS `type`"))
-                ->union($a)
-                ->union($b)
-                ->orderBy('created_at', 'desc')->limit(5)->get();
-           foreach ($cont as $key=>$c){
-               if($c->type == "Contactus"){
-                  $msg= 'New Request for Support from '.$c->firm_name;
-                  // $cont[$key]['name']= "<a href='{{route('contactus')}}'>'New Request for Support from '.$c->firm_name</a>";
-                   $cont[$key]['name']= '<a href="'.route('contactus.index') .'">' .$msg . '</a>';
-               }elseif ($c->type == "Membership"){
-                   $user = VendorDetail::where('vendor_id',$c->firm_name)->first();
-                   $name = $user->firm_name ?? "N/A";
-                   $msg =  $name.' has purchased a new membership Plan';
-                   $cont[$key]['name']= '<a href="'.route('membership.index') .'">' .$msg . '</a>';
-               }elseif ($c->type == 'Vendor'){
-                   $msg =  $c->firm_name.' has requested for approval for Salon Registration';
-                   $cont[$key]['name']= '<a href="'.route('vendorApproval.index') .'">' .$msg . '</a>';
-               }
-           }
-            return $cont->toArray();
+                }
+            }
+            return $notifications;
         }
+
     }
     public function get_latest_notification()
     {
-        if(Auth::user()->type == 'Admin'){
-            $a = Contactus::select('id','name','created_at', DB::raw("'Contactus' AS `type`"));
-            $b = Membership::select('id','user_id','created_at', DB::raw("'Membership' AS `type`"));
-            $query = VendorDetail::select('id','firm_name','created_at', DB::raw("'Vendor' AS `type`"))
-                ->union($a)
-                ->union($b)
-                ->orderBy('created_at', 'desc')->first();
 
-            if($query->type == "Contactus"){
-                $msg= 'New Request for Support from '.$query->firm_name;
-                $query['name']= '<a href="'.route('contactus.index') .'">' .$msg . '</a>';
-            }elseif ($query->type == "Membership"){
-                $user = VendorDetail::where('vendor_id',$query->firm_name)->first();
-                $name = $user->firm_name ?? "N/A";
-                $msg= $name.' has purchased a new membership Plan';
-                $query['name']= '<a href="'.route('membership.index') .'">' .$msg . '</a>';
-            }elseif ($query->type == 'Vendor'){
-                $msg= $query->firm_name.' has requested for approval for Salon Registration';
-                $query['name']= '<a href="'.route('vendorApproval.index') .'">' .$msg . '</a>';
+        if(Auth::user()->type == 'Admin') {
+            $notification = Notification::where('is_seen', 0)->where('user_id', Auth::id())->orderBy('created_at', 'desc')->first()->toArray();
+                if ($notification['title'] == 'Contact us') {
+                    $notification['name'] = '<a href="' . route('contactus.index') . '?id='.$notification['id'].'">' . $notification['message'] . '</a>';
+                } elseif ($notification['title'] == 'Membership purchased') {
+                    $notification['name'] = '<a href="' . route('membership.index') . '?id='.$notification['id'].'">' . $notification['message'] . '</a>';
+                } elseif ($notification['title'] == 'New Vendor Registration') {
+                    $notification['name'] = '<a href="' . route('approval') . '?id='.$notification['id'].'">' . $notification['message'] . '</a>';
+
+                }
+            return $notification;
             }
-            return $query->toArray();
-            //return $user->unreadNotifications()->orderBy('created_at', 'desc')->first();
+
         }
 
+    public function reedNotification()
+    {
+        if(Auth::user()->type == 'Admin') {
+           Notification::where('user_id',Auth::id())->update(['is_seen'=>1]);
+           return \response()->json(['data'=> true]);
+        }
     }
-
 }

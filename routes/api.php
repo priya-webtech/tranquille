@@ -54,8 +54,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('changePassword', [AuthController::class, 'changePassword']);
     Route::get('getuserInfo', [AuthController::class, 'getuserInfo']);
-    //Notification 
+    //Notification
     Route::get('notificationList', [UserController::class, 'notificationList']);
+    Route::get('notificationSeen', [UserController::class, 'notificationSeen']);
     Route::get('getuserEarnList', [CustomController::class, 'getuserEarnList']);
     Route::post('referralEarn', [CustomController::class, 'referralEarn']);
 

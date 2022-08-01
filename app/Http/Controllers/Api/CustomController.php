@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\SendNotification;
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -136,10 +137,17 @@ class CustomController extends Controller
                 'email' => isset($request->email) ? $request->email : '',
                 'phone' => isset($request->phone) ? $request->phone : null,
             ])) {
-
-                broadcast(new \App\Events\SendNotification($data))->toOthers();
+                $AdminUser = User::where('type','Admin')->first();
+                $notification = new Notification();
+                $notification->title = 'Contact us';
+                $notification->message = 'New Request for Support from '.$request->name;
+                $notification->type = 'Support';
+                $notification->user_id  = $AdminUser->id;
+                $notification->type_id  = $data->id;
+                $notification->created_at = date('d-m-Y H:i:s');
+                $notification->save();
+                broadcast(new \App\Events\SendNotification($notification))->toOthers();
                 return response()->json(['status' => 200, 'message' => 'Contact us Added succesfully','data' => $data ], 200);
-//                "Vendor_Name" or "Customer_Name"
 
             }
             return response()->json(['status' => 201, 'message' => 'Error in Contact us' ], 200);
