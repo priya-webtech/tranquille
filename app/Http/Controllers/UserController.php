@@ -372,11 +372,4 @@ class UserController extends Controller
 
         }
 
-    public function reedNotification()
-    {
-        if(Auth::user()->type == 'Admin') {
-           Notification::where('user_id',Auth::id())->update(['is_seen'=>1]);
-           return \response()->json(['data'=> true]);
-        }
-    }
 }

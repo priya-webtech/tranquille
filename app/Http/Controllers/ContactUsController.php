@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Membership;
 use App\Models\Notification;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Contactus;
 
@@ -18,6 +20,7 @@ class ContactUsController extends Controller
         if(\request('id')){
             Notification::where('id',\request('id'))->update(['is_seen'=>1]);
         }
+
         if (request()->ajax()) {
             return datatables()->of(Contactus::select('*'))
                 ->addIndexColumn()

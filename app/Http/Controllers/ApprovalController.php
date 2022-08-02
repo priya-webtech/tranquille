@@ -21,8 +21,8 @@ class ApprovalController extends Controller
     public function index()
     {
 
-
         if (request()->ajax()) {
+
             return datatables()->of(User::with('vendordetails')->select('*')->where('type', '=', 'Provider')->where('active', '=', 'N'))
                 ->addIndexColumn()
                 ->editColumn('logo', function ($query) {

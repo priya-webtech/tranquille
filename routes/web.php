@@ -37,15 +37,14 @@ use App\Http\Controllers\PolicyController;
 Route::get('/', function () {
     return view('auth.login');
 });
-Route::get('notifications', [UserController::class, 'notifications']);
-Route::get('latest-notification', [UserController::class, 'get_latest_notification']);
-Route::get('reed-notification', [UserController::class, 'reedNotification'])->name('reed-notification');
+
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
-
+    Route::get('notifications', [UserController::class, 'notifications']);
+    Route::get('latest-notification', [UserController::class, 'get_latest_notification']);
     /*=== dropdown Route ===*/
     Route::get('serviceDropdown', [CommonController::class, 'serviceDropdown']);
     Route::post('treatmentDropdown', [CommonController::class, 'treatmentDropdown'])->name('treatmentDropdown');
@@ -95,7 +94,7 @@ Route::group(['middleware' => ['auth']], function () {
     /*=== Service Route ===*/
     Route::resource('service', ServiceController::class, ['except' => ['create', 'show', 'update']]);
     /*=== Treatment Route ===*/
-    Route::resource('treatment', TreatmentController::class, ['except' => ['create', 'show', 'update']]);
+    Route::resource('treatments', TreatmentController::class, ['except' => ['create', 'show', 'update']]);
     /*=== Product brand Route ===*/
     Route::resource('product', ProductBrandController::class, ['except' => ['create', 'show', 'update']]);
     /*=== contact us user Route ===*/

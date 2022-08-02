@@ -20,17 +20,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\URL;
 use Carbon\Carbon;
+
 use PDF;
 use Illuminate\Support\Facades\Storage;
 class BookingController extends Controller
 {
     public function __construct()
     {
-       $this->cancelstatus = collect([ '1' , '3', '5' , '10' ]);
-       $this->donestatus = collect([ '5' , '10']);
-       $this->rejectedstatus = collect([ '1' , '3', '5']);
-       $this->ratestatus = collect(['11']);
-       $this->reschedulestatus = collect([ '5' , '8' , '10' ]);
+        $this->cancelstatus = collect([ '1' , '3', '5' , '10' ]);
+        $this->donestatus = collect([ '5' , '10']);
+        $this->rejectedstatus = collect([ '1' , '3', '5']);
+        $this->ratestatus = collect(['11']);
+        $this->reschedulestatus = collect([ '5' , '8' , '10' ]);
     }
 
     public function availableVendorSlot(Request $request)
@@ -46,21 +47,21 @@ class BookingController extends Controller
             }
             $slots = BusinessHours::where('vendor_id', $request->vendor_id)->first();
             $bookings = Booking::where('vendor_id', $request->vendor_id)
-              						->where('employee_id','=',$request->employee_id)
-              						->whereDate('booking_date',$request->booking_date)
-              						->select('id','booking_time','status_id')
-              						->get();
+                ->where('employee_id','=',$request->employee_id)
+                ->whereDate('booking_date',$request->booking_date)
+                ->select('id','booking_time','status_id')
+                ->get();
 
             $blocktimes =DB::table('blocktime')->where('vendor_id', $request->vendor_id)
-                                        ->where('employee_id','=',$request->employee_id)
-                                        ->whereDate('booking_date',$request->booking_date)
-                                        ->select('id','booking_time','expct_end_time')->get();
+                ->where('employee_id','=',$request->employee_id)
+                ->whereDate('booking_date',$request->booking_date)
+                ->select('id','booking_time','expct_end_time')->get();
 
             if ($slots) {
-            	$data = collect([]);
-				$day = date('D', strtotime($request->booking_date));
-				$start = '';
-				$end = '';
+                $data = collect([]);
+                $day = date('D', strtotime($request->booking_date));
+                $start = '';
+                $end = '';
                 $isworking = true;
 
                 switch ($day) {
@@ -78,39 +79,39 @@ class BookingController extends Controller
                         $start =  strtotime($slots->timeWedStart);
                         $end =  strtotime($slots->timeWedEnd) ;
                         $isworking = ($slots->dayWednesdayStatus == 1) ? true : false;
-                    break;
+                        break;
                     case 'Thu':
                         $start =  strtotime($slots->timeThuStart);
                         $end =  strtotime($slots->timeThuEnd);
                         $isworking = ($slots->dayThursdayStatus == 1) ? true : false;
-                    break;
+                        break;
                     case 'Fri':
                         $start =  strtotime($slots->timeFriStart);
                         $end =  strtotime($slots->timeFriEnd) ;
                         $isworking = ($slots->dayFridayStatus == 1) ? true : false;
-                    break;
+                        break;
                     case 'Sat':
                         $start =  strtotime($slots->timeSatStart);
                         $end =  strtotime($slots->timeSatEnd);
                         $isworking = ($slots->daySaturdayStatus == 1) ? true : false;
-                    break;
+                        break;
                     case 'Sun':
                         $start =  strtotime($slots->timeSunStart);
                         $end =  strtotime($slots->timeSunEnd) ;
                         $isworking = ($slots->daySundayStatus == 1) ? true : false;
-                    break;
+                        break;
                     default:
-                    	$start =  strtotime($slots->timeMonFriStart);
+                        $start =  strtotime($slots->timeMonFriStart);
                         $end =  strtotime($slots->timeMonFriEnd);
                         $isworking = ($slots->dayMonFriStatus == 1) ? true : false;
-                    break;
+                        break;
                 }
 
                 if($isworking) {
 
 
                     while ($start < $end)
-    				{
+                    {
                         $blocktime = $blocktimes->where('booking_time','<',date('H:i:s',strtotime('+15 minutes',$start)))->where('expct_end_time', '>', date('Y-m-d H:i:s',strtotime($request->booking_date.' '.date('H:i:s',$start))))->first();
 
 
@@ -120,14 +121,14 @@ class BookingController extends Controller
                             $existbooking = $bookings->where('booking_time','=',date('H:i:s',$start))->first() ;
 
                             $timebefore =  getCurrentTime() > date('Y-m-d H:i:s',strtotime($request->booking_date.' '.date('H:i:s',$start)));
-        					$data->push([
-        						'time' => date('H:i',$start),
-        						'is_booked' =>  ($existbooking || $timebefore) ? true : false ,
-        			        ]);
+                            $data->push([
+                                'time' => date('H:i',$start),
+                                'is_booked' =>  ($existbooking || $timebefore) ? true : false ,
+                            ]);
                         }
 
-    					$start = strtotime('+15 minutes',$start);
-    				}
+                        $start = strtotime('+15 minutes',$start);
+                    }
                 }
                 return response()->json(['status' => 200, 'message' => 'Data successfully retrieved','data' => $data ], 200);
             }
@@ -143,11 +144,10 @@ class BookingController extends Controller
     {
         try
         {
-        	$userid = $request->user()->id;
+            $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
                 'vendor_id' 	=> 'required|exists:vendor_details,vendor_id',
                 'service_id' 	=> 'required|exists:services,id',
-                'status_id' 	=> 'required|exists:statuses,id',
                 'treatment_id' 	=> 'required|exists:treatments,id',
                 'employee_id' 	=> 'required|exists:vendor_teams,id',
                 'address_id' 	=> 'nullable|exists:addresses,id',
@@ -167,30 +167,30 @@ class BookingController extends Controller
 
             if (availableBookingSlot($request->vendor_id, $request->employee_id, $request->booking_date.' '.$request->booking_time )) {
 
-            	$booking = Booking::create([
-	            	'user_id' => $userid,
-	                'vendor_id' => $request->vendor_id,
-	                'service_id' => $request->service_id,
-	                'treatment_id' => $request->treatment_id,
-	               	'employee_id' => $request->employee_id,
-	               	'address_id' => isset($request->address_id) ? $request->address_id : null,
-	               	'orderid' => $request->vendor_id.'_'.date('YmdHis'),
-	                'booking_date' => $request->booking_date,
-	                'booking_time' => $booking_time,
+                $booking = Booking::create([
+                    'user_id' => $userid,
+                    'vendor_id' => $request->vendor_id,
+                    'service_id' => $request->service_id,
+                    'treatment_id' => $request->treatment_id,
+                    'employee_id' => $request->employee_id,
+                    'address_id' => isset($request->address_id) ? $request->address_id : null,
+                    'orderid' => $request->vendor_id.'_'.date('YmdHis'),
+                    'booking_date' => $request->booking_date,
+                    'booking_time' => $booking_time,
                     'full_amount' => $request->discount ? $request->expct_amount - (($request->discount / 100) * $request->expct_amount) : $request->expct_amount ,
                     //'full_amount' => $request->discount ? $request->expct_amount - $request->discount : $request->expct_amount ,
                     'final_amount' => $request->discount ? $request->expct_amount - (($request->discount / 100) * $request->expct_amount) : $request->expct_amount,
                     //'final_amount' => $request->discount ? $request->expct_amount - $request->discount : $request->expct_amount,
                     'discount_amount' => $request->discount ? ($request->discount / 100) * $request->expct_amount : 0.00 ,
                     //'discount_amount' => $request->discount ? $request->discount : 0.00 ,
-	                'expct_amount' => $request->expct_amount,
-	                'expct_end_time' => date('Y-m-d H:i',$expct_end_time),
-	                // 'address' => isset($request->address) ? $request->address : '',
+                    'expct_amount' => $request->expct_amount,
+                    'expct_end_time' => date('Y-m-d H:i',$expct_end_time),
+                    // 'address' => isset($request->address) ? $request->address : '',
                     'address' => isset($vendoraddress) ? $vendoraddress : '',
-	                'latitude' => isset($request->latitude) ? $request->latitude : '',
-	                'longitude' => isset($request->longitude) ? $request->longitude : '',
-	            ]);
-	            $data = bookingInfoData($booking->id);
+                    'latitude' => isset($request->latitude) ? $request->latitude : '',
+                    'longitude' => isset($request->longitude) ? $request->longitude : '',
+                ]);
+                $data = bookingInfoData($booking->id);
                 $data['cancel'] = ($this->cancelstatus->contains($data->status_id) && $data->user_id == $userid) ? true : false ;
                 $data['done'] = ($this->donestatus->contains($data->status_id)) ? true : false ;
                 $data['rejected'] = ($this->rejectedstatus->contains($data->status_id) && $data->vendor_id == $userid) ? true : false ;
@@ -223,7 +223,7 @@ class BookingController extends Controller
     {
         try
         {
-        	$userid = $request->user()->id;
+            $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
                 'booking_id' 	=> 'required|exists:bookings,id',
                 'status'    => 'required|exists:statuses,status',
@@ -254,7 +254,7 @@ class BookingController extends Controller
     {
         try
         {
-        	$userid = $request->user()->id;
+            $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
                 'booking_id' 	=> 'required|exists:bookings,id',
             ]);
@@ -281,7 +281,7 @@ class BookingController extends Controller
     {
         try
         {
-        	$userid = $request->user()->id;
+            $userid = $request->user()->id;
             $validator = Validator::make($request->all(), [
                 'booking_id' 	=> 'required|exists:bookings,id',
                 'amount' => 'required',
@@ -300,21 +300,21 @@ class BookingController extends Controller
 
             $status = Status::where('status','=',$request->status)->pluck('id')->first();
             if ($payment = Payment::create([
-	            	'user_id' => $userid,
-	                'vendor_id' => $data->vendor_id,
-	                'booking_id' => $request->booking_id,
-	                'amount' => $request->amount,
-	               	'transaction_id' => isset($request->transaction_id) ? $request->transaction_id :null,
-	               	'transaction_at' => date('Y-m-d H:i:s'),
-	               	'description' => isset($request->description) ? $request->description : '',
-	               	'response' => isset($request->response) ? $request->response : null,
-	                'status' => $status,
-	            ])) {
-            	$booking = Booking::where('id', $request->booking_id)->update([
-            		'status_id'  => $status,
-            		'transaction_id'  => $request->transaction_id,
-            		'payment_id'  => $payment->id,
-            	]);
+                'user_id' => $userid,
+                'vendor_id' => $data->vendor_id,
+                'booking_id' => $request->booking_id,
+                'amount' => $request->amount,
+                'transaction_id' => isset($request->transaction_id) ? $request->transaction_id :null,
+                'transaction_at' => date('Y-m-d H:i:s'),
+                'description' => isset($request->description) ? $request->description : '',
+                'response' => isset($request->response) ? $request->response : null,
+                'status' => $status,
+            ])) {
+                $booking = Booking::where('id', $request->booking_id)->update([
+                    'status_id'  => $status,
+                    'transaction_id'  => $request->transaction_id,
+                    'payment_id'  => $payment->id,
+                ]);
                 if(Payment::where('user_id',$userid)->where('status','=','5')->count() == 1)
                 {
                     updateReferralEarnAmount($userid);
@@ -352,14 +352,14 @@ class BookingController extends Controller
         try {
             $userid = $request->user()->id;
             $bookings = Booking::with('vendorinfo','employeeinfo','statusinfo','serviceinfo' ,'treatmentinfo')
-                        ->where('user_id', $userid)
-                        ->whereIn('status_id', ['1','3','4','5','6','10','14'])
-                        ->whereDate('booking_date', '>=', date('Y-m-d'))
-                        ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
-                        ->orderBy('booking_date', 'ASC')
-                        ->orderBy('booking_time', 'ASC')
-                        ->orderBy('id', 'ASC')
-                        ->paginate(70);
+                ->where('user_id', $userid)
+                ->whereIn('status_id', ['1','3','4','5','6','10','14'])
+                ->whereDate('booking_date', '>=', date('Y-m-d'))
+                ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
+                ->orderBy('booking_date', 'ASC')
+                ->orderBy('booking_time', 'ASC')
+                ->orderBy('id', 'ASC')
+                ->paginate(70);
             if ($bookings) {
                 $bookings->getCollection()->transform(function ($value) use($userid) {
                     $value['pending'] = ($value->status_id == 3) ? true : false ;
@@ -384,14 +384,14 @@ class BookingController extends Controller
         try {
             $userid = $request->user()->id;
             $bookings = Booking::with('vendorinfo','employeeinfo','statusinfo','serviceinfo' ,'treatmentinfo')
-                        ->where('user_id', $userid)
-                        ->whereIn('status_id', ['2','7','8','9','11','12','13'])
-                        // ->whereDate('booking_date', '<', date('Y-m-d'))
-                        ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
-                        ->orderBy('booking_date', 'DESC')
-                        ->orderBy('booking_time', 'DESC')
-                        ->orderBy('id', 'DESC')
-                        ->paginate(70);
+                ->where('user_id', $userid)
+                ->whereIn('status_id', ['2','7','8','9','11','12','13'])
+                // ->whereDate('booking_date', '<', date('Y-m-d'))
+                ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
+                ->orderBy('booking_date', 'DESC')
+                ->orderBy('booking_time', 'DESC')
+                ->orderBy('id', 'DESC')
+                ->paginate(70);
             if ($bookings) {
                 $bookings->getCollection()->transform(function ($value) use($userid) {
                     $value['pending'] = ($value->status_id == 3) ? true : false ;
@@ -416,13 +416,13 @@ class BookingController extends Controller
         try {
             $userid = $request->user()->id;
             $bookings = Booking::with('userinfo','employeeinfo','statusinfo','serviceinfo' ,'treatmentinfo')
-                        ->where('vendor_id', $userid)
-                        ->whereIn('status_id', ['5','10','14'])
-                        ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
-                        ->orderBy('booking_date', 'DESC')
-                        ->orderBy('booking_time', 'DESC')
-                        ->orderBy('id', 'DESC')
-                        ->paginate(70);
+                ->where('vendor_id', $userid)
+                ->whereIn('status_id', ['5','10','14'])
+                ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
+                ->orderBy('booking_date', 'DESC')
+                ->orderBy('booking_time', 'DESC')
+                ->orderBy('id', 'DESC')
+                ->paginate(70);
             if ($bookings) {
                 $bookings->getCollection()->transform(function ($value) use($userid) {
                     $value['pending'] = ($value->status_id == 3) ? true : false ;
@@ -448,14 +448,14 @@ class BookingController extends Controller
         try {
             $userid = $request->user()->id;
             $bookings = Booking::with('userinfo','employeeinfo','statusinfo','serviceinfo' ,'treatmentinfo')
-                        ->where('vendor_id', $userid)
-                        ->whereIn('status_id', ['6'])
-                        // ->whereDate('booking_date', '>=', date('Y-m-d'))
-                        ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
-                        ->orderBy('booking_date', 'DESC')
-                        ->orderBy('booking_time', 'DESC')
-                        ->orderBy('id', 'DESC')
-                        ->paginate(70);
+                ->where('vendor_id', $userid)
+                ->whereIn('status_id', ['6'])
+                // ->whereDate('booking_date', '>=', date('Y-m-d'))
+                ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
+                ->orderBy('booking_date', 'DESC')
+                ->orderBy('booking_time', 'DESC')
+                ->orderBy('id', 'DESC')
+                ->paginate(70);
             if ($bookings) {
                 $bookings->getCollection()->transform(function ($value) use($userid) {
                     $value['pending'] = ($value->status_id == 3) ? true : false ;
@@ -479,14 +479,14 @@ class BookingController extends Controller
         try {
             $userid = $request->user()->id;
             $bookings = Booking::with('userinfo','employeeinfo','statusinfo','serviceinfo' ,'treatmentinfo')
-                        ->where('vendor_id', $userid)
-                        ->whereIn('status_id', ['2','3','7','8','9','11'])
-                        // ->whereDate('booking_date', '<', date('Y-m-d'))
-                        ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
-                        ->orderBy('booking_date', 'DESC')
-                        ->orderBy('booking_time', 'DESC')
-                        ->orderBy('id', 'DESC')
-                        ->paginate(70);
+                ->where('vendor_id', $userid)
+                ->whereIn('status_id', ['2','3','7','8','9','11'])
+                // ->whereDate('booking_date', '<', date('Y-m-d'))
+                ->select('id','user_id','vendor_id','employee_id','service_id','treatment_id','booking_date','booking_time','orderid','start_time','status_id','address','latitude','longitude','expct_amount','final_amount','discount_amount','full_amount')
+                ->orderBy('booking_date', 'DESC')
+                ->orderBy('booking_time', 'DESC')
+                ->orderBy('id', 'DESC')
+                ->paginate(70);
             if ($bookings) {
                 $bookings->getCollection()->transform(function ($value) use($userid) {
                     $value['pending'] = ($value->status_id == 3) ? true : false ;
@@ -511,15 +511,15 @@ class BookingController extends Controller
         try {
             $userid = $request->user()->id;
             $payments = Payment::with('userinfo','vendorinfo','bookinginfo')
-                        ->where('vendor_id', $userid)
-                        ->where('status','=','5')
-                        ->select('id','user_id', 'vendor_id', 'booking_id', 'amount', 'transaction_id', 'transaction_at', 'description', 'response', 'status', 'created_at')
-                        ->latest()
-                        ->paginate(70);
+                ->where('vendor_id', $userid)
+                ->where('status','=','5')
+                ->select('id','user_id', 'vendor_id', 'booking_id', 'amount', 'transaction_id', 'transaction_at', 'description', 'response', 'status', 'created_at')
+                ->latest()
+                ->paginate(70);
             if($payments) {
                 $monthly = Payment::where('vendor_id','=', $userid)->where('status','=', 5)->whereBetween('transaction_at',
-                            [Carbon::now()->subYear(), Carbon::now()]
-                        )->select( DB::raw('sum(amount) as earning'), DB::raw("DATE_FORMAT(transaction_at,'%M') as month"), DB::raw("DATE_FORMAT(transaction_at,'%Y') as year"))->groupBy('year','month')->get();
+                    [Carbon::now()->subYear(), Carbon::now()]
+                )->select( DB::raw('sum(amount) as earning'), DB::raw("DATE_FORMAT(transaction_at,'%M') as month"), DB::raw("DATE_FORMAT(transaction_at,'%Y') as year"))->groupBy('year','month')->get();
 
                 $yearly = Payment::where('vendor_id','=', $userid)->where('status','=', 5)->select( DB::raw('sum(amount) as earning'), DB::raw("DATE_FORMAT(transaction_at,'%Y') as year"))->groupBy('year')->get();
                 $thismonth = $monthly->where('month','=',date('F'))->where('year','=',date('Y'))->first();
@@ -566,11 +566,11 @@ class BookingController extends Controller
         try {
             $userid = $request->user()->id;
             $payments = Payment::with('userinfo','vendorinfo','bookinginfo')
-                        ->where('user_id', $userid)
-                        ->where('status','=','5')
-                        ->select('id','user_id', 'vendor_id', 'booking_id', 'amount', 'transaction_id', 'transaction_at', 'description', 'response', 'status', 'created_at')
-                        ->latest()
-                        ->paginate(70);
+                ->where('user_id', $userid)
+                ->where('status','=','5')
+                ->select('id','user_id', 'vendor_id', 'booking_id', 'amount', 'transaction_id', 'transaction_at', 'description', 'response', 'status', 'created_at')
+                ->latest()
+                ->paginate(70);
             if($payments) {
                 return response()->json(['status' => 200, 'message' => 'Data successfully retrieved', 'data' => $payments ], 200);
             }
@@ -594,10 +594,10 @@ class BookingController extends Controller
             }
             $status = Status::where('status','=','Canceled')->pluck('id')->first();
             if ($booking = Booking::where('id', $request->booking_id)->update([
-                    'status_id'  => $status,
-                    'canceled'  => true,
-                    'canceled_reson'  => isset($request->canceled_reson) ? $request->canceled_reson : '',
-                ])) {
+                'status_id'  => $status,
+                'canceled'  => true,
+                'canceled_reson'  => isset($request->canceled_reson) ? $request->canceled_reson : '',
+            ])) {
 
                 $data = bookingInfoData($request->booking_id);
                 $data['pending'] = ($data->status_id == 3) ? true : false ;
@@ -630,8 +630,8 @@ class BookingController extends Controller
             }
             $status = Status::where('status','=','Completed')->pluck('id')->first();
             if ($booking = Booking::where('id', $request->booking_id)->update([
-                    'status_id'  => $status,
-                ])) {
+                'status_id'  => $status,
+            ])) {
                 $data = bookingInfoData($request->booking_id);
                 $data['pending'] = ($data->status_id == 3) ? true : false ;
                 $data['cancel'] = ($data->status_id == 2) ? true : false ;
@@ -672,8 +672,8 @@ class BookingController extends Controller
             }
             $status = Status::where('status','=','Rejected')->pluck('id')->first();
             if ($booking = Booking::where('id', $request->booking_id)->update([
-                    'status_id'  => $status,
-                ])) {
+                'status_id'  => $status,
+            ])) {
                 $data = bookingInfoData($request->booking_id);
                 $data['pending'] = ($data->status_id == 3) ? true : false ;
                 $data['cancel'] = ($data->status_id == 2) ? true : false ;
@@ -681,24 +681,25 @@ class BookingController extends Controller
                 $data['rejected'] = ($data->status_id == 8) ? true : false ;
                 $data['rate'] = ($data->status_id ==7) ? true : false ;
                 $data['reschedule'] = ($data->status_id == 10) ? true : false ;
+                $book =   Booking::find($request->booking_id);
                 $notification = new Notification();
-
                 $notification->title = 'Booking Cancel';
                 $notification->message = 'Your booking has been cancelled.';
                 $notification->type = 'My Appointment';
-                $notification->user_id = $booking->user_id;
-                $notification->type_id = $booking->id;
-                $notification->booking_id = $booking->id;
+                $notification->user_id = $book->user_id;
+                $notification->type_id = $book->id;
+                $notification->booking_id = $book->id;
                 $notification->created_at = date('d-m-Y H:i:s');
                 $notification->save();
-                $notification->title = 'Booking Cancel';
-                $notification->message = 'A Booking has been cancelled.';
-                $notification->type = 'Appointment';
-                $notification->user_id = $booking->vendor_id;
-                $notification->type_id = $booking->id;
-                $notification->booking_id = $booking->id;
-                $notification->created_at = date('d-m-Y H:i:s');
-                $notification->save();
+                $notificationVEN = new Notification();
+                $notificationVEN->title = 'Booking Cancel';
+                $notificationVEN->message = 'A Booking has been cancelled.';
+                $notificationVEN->type = 'Appointment';
+                $notificationVEN->user_id = $book->vendor_id;
+                $notificationVEN->type_id = $book->id;
+                $notificationVEN->booking_id = $book->id;
+                $notificationVEN->created_at = date('d-m-Y H:i:s');
+                $notificationVEN->save();
                 $notifydata = array('title' => 'Your Booking has been canceled', 'message' => date('d-m-Y',strtotime($data->booking_date)), 'status' =>  'Open', 'booking_id' =>  $data->id);
                 sendPushNotification($notifydata, $data->vendor_id);
                 return response()->json(['status' => 200, 'message' => 'Booking Rejected successfully','data' => $data ], 200);
@@ -724,8 +725,8 @@ class BookingController extends Controller
             }
             $status = Status::where('status','=','Accepted')->pluck('id')->first();
             if ($booking = Booking::where('id', $request->booking_id)->where('vendor_id', '=', $userid)->update([
-                    'status_id'  => $status,
-                ])) {
+                'status_id'  => $status,
+            ])) {
                 $data = bookingInfoData($request->booking_id);
                 $data['pending'] = ($data->status_id == 3) ? true : false ;
                 $data['cancel'] = ($data->status_id == 2) ? true : false ;
@@ -733,17 +734,20 @@ class BookingController extends Controller
                 $data['rejected'] = ($data->status_id == 8) ? true : false ;
                 $data['rate'] = ($data->status_id ==7) ? true : false ;
                 $data['reschedule'] = ($data->status_id == 10) ? true : false ;
-                $vendor = VendorDetail::find($booking->vendor_id);
-                $notification = new Notification();
+                $book = Booking::find($request->booking_id);
 
+                $vendor = VendorDetail::where('vendor_id',$book['vendor_id'])->first();
+
+                $notification = new Notification();
                 $notification->title = 'Booking accepted';
                 $notification->message = $vendor->firm_name . 'has accepted your booking.';
                 $notification->type = 'My Appointment';
-                $notification->user_id = $booking->user_id;
-                $notification->type_id = $booking->id;
-                $notification->booking_id = $booking->id;
+                $notification->user_id = $book['user_id'];
+                $notification->type_id = $book['id'];
+                $notification->booking_id = $book['id'];
                 $notification->created_at = date('d-m-Y H:i:s');
                 $notification->save();
+
                 $notifydata = array('title' => 'Hey, Your booking has been Accepted ', 'message' => date('d-m-Y',strtotime($data->booking_date)), 'status' =>  'Accepted', 'booking_id' =>  $data->id);
                 sendPushNotification($notifydata, $data->user_id);
                 return response()->json(['status' => 200, 'message' => 'Booking Rejected successfully','data' => $data ], 200);
@@ -774,11 +778,11 @@ class BookingController extends Controller
             $expct_end_time =strtotime('+60 minutes', strtotime($request->booking_date.' '.$request->booking_time));
 
             if ($booking = Booking::where('id', $request->booking_id)->update([
-                    'status_id'  => $status,
-                    'booking_date' => $request['booking_date'] ? $request['booking_date'] : null,
-                    'booking_time' => $booking_time,
-                    'expct_end_time' => date('Y-m-d H:i',$expct_end_time),
-                ])) {
+                'status_id'  => $status,
+                'booking_date' => $request['booking_date'] ? $request['booking_date'] : null,
+                'booking_time' => $booking_time,
+                'expct_end_time' => date('Y-m-d H:i',$expct_end_time),
+            ])) {
                 $data = bookingInfoData($request->booking_id);
                 $data['pending'] = ($data->status_id == 3) ? true : false ;
                 $data['cancel'] = ($data->status_id == 2) ? true : false ;
@@ -786,16 +790,20 @@ class BookingController extends Controller
                 $data['rejected'] = ($data->status_id == 8) ? true : false ;
                 $data['rate'] = ($data->status_id ==7) ? true : false ;
                 $data['reschedule'] = ($data->status_id == 10) ? true : false ;
-                $user = User::find($booking->user_id);
+                $book = Booking::find($request->booking_id);
+
+                $user =  User::find($book['user_id']);
+
                 $notification = new Notification();
                 $notification->title = 'Customer rescheduled booking';
-                $notification->message = $user->name.'has a reschedule request.';
+                $notification->message = $user['name'].'has a reschedule request.';
                 $notification->type = 'Appointment';
-                $notification->user_id  = $booking->vendor_id;
-                $notification->type_id  = $booking->id;
-                $notification->booking_id  = $booking->id;
+                $notification->user_id  = $book['vendor_id'];
+                $notification->type_id  = $book['id'];
+                $notification->booking_id  = $book['id'];
                 $notification->created_at = date('d-m-Y H:i:s');
                 $notification->save();
+
                 return response()->json(['status' => 200, 'message' => 'Booking Reschedule successfully','data' => $data ], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in Booking Reschedule' ], 200);
@@ -821,8 +829,8 @@ class BookingController extends Controller
             }
             $status = Status::where('status','=','Closed')->pluck('id')->first();
             if ($booking = Booking::where('id', $request->booking_id)->update([
-                    'status_id'  => $status,
-                ])) {
+                'status_id'  => $status,
+            ])) {
                 $data = bookingInfoData($request->booking_id);
                 $data['cancel'] = ($this->cancelstatus->contains($data->status_id) && $data->user_id == $userid) ? true : false ;
                 $data['done'] = ($this->donestatus->contains($data->status_id)) ? true : false ;
@@ -862,8 +870,8 @@ class BookingController extends Controller
                 return response()->json(['status' => 201, 'message' =>  implode(', ',$validator->messages()->all())], 200);
             }
             if ($booking = Booking::where('id', $request->booking_id)->update([
-                    'status_id'  => 3,
-                ])) {
+                'status_id'  => 3,
+            ])) {
                 $data = bookingInfoData($request->booking_id);
                 $data['cancel'] = ($this->cancelstatus->contains($data->status_id) && $data->user_id == $userid) ? true : false ;
                 $data['done'] = ($this->donestatus->contains($data->status_id)) ? true : false ;
@@ -886,10 +894,10 @@ class BookingController extends Controller
         try {
             $userid = $request->user()->id;
             $ratings = Feedback::with('userinfo')
-                        ->where('reviewto', $userid)
-                        ->select('id','reviewby', 'reviewto', 'booking_id', 'treatment_id', 'rating', 'ambiance', 'hygiene','medewerkers', 'review', 'created_at')
-                        ->latest()
-                        ->paginate(70);
+                ->where('reviewto', $userid)
+                ->select('id','reviewby', 'reviewto', 'booking_id', 'treatment_id', 'rating', 'ambiance', 'hygiene','medewerkers', 'review', 'created_at')
+                ->latest()
+                ->paginate(70);
             if($ratings) {
                 $avgrating = Feedback::where('reviewto', $userid)->groupBy( 'reviewto' )->select( 'reviewto', DB::raw( 'AVG( rating ) as avgrating' ), DB::raw( 'AVG( ambiance ) as avgambiance' ), DB::raw( 'AVG( hygiene ) as avghygiene' ), DB::raw( 'AVG( medewerkers ) as avgmedewerkers' ) )->get();
                 $collection = collect([
@@ -945,8 +953,8 @@ class BookingController extends Controller
             }
             if (Notification::where('id', $request->notification_id)->where('user_id','=',$userid)->delete()) {
                 $data = Notification::where('user_id', $userid)
-                        ->select('id','type', 'title', 'message', 'is_seen', 'created_at', 'booking_id', 'status')
-                        ->paginate(100);
+                    ->select('id','type', 'title', 'message', 'is_seen', 'created_at', 'booking_id', 'status')
+                    ->paginate(100);
                 return response()->json(['status' => 200, 'message' => 'Notification Deleted successfully', 'data' => $data], 200);
             }
             return response()->json(['status' => 201, 'message' => 'Error in Notification Delete' ], 200);
@@ -988,25 +996,25 @@ class BookingController extends Controller
             $month = $request->month ;
             $week = $request->week;
             $payments = Payment::with('userinfo')
-                        ->where(function ($query) use ($request) {
-                            if(!empty($request->year))
-                            {
-                                $query->whereYear('transaction_at', $request->year);
-                            }
-                            if(!empty($request->month))
-                            {
-                                $query->whereMonth('transaction_at', $request->month);
-                            }
-                            if(!empty($request->week))
-                            {
-                                $query->whereBetween('transaction_at', [date("Y-m-d", strtotime($request->week." sunday ".$request->year.'-'.$request->month)), date("Y-m-d", strtotime($request->week." saturday ".$request->year.'-'.$request->month))]);
-                            }
-                        })
-                        ->where('vendor_id', $userid)
-                        ->where('status','=','5')
-                        ->select('id','user_id', 'amount', 'transaction_id', 'transaction_at', 'description', 'response', 'status', 'created_at')
-                        ->latest()
-                        ->get();
+                ->where(function ($query) use ($request) {
+                    if(!empty($request->year))
+                    {
+                        $query->whereYear('transaction_at', $request->year);
+                    }
+                    if(!empty($request->month))
+                    {
+                        $query->whereMonth('transaction_at', $request->month);
+                    }
+                    if(!empty($request->week))
+                    {
+                        $query->whereBetween('transaction_at', [date("Y-m-d", strtotime($request->week." sunday ".$request->year.'-'.$request->month)), date("Y-m-d", strtotime($request->week." saturday ".$request->year.'-'.$request->month))]);
+                    }
+                })
+                ->where('vendor_id', $userid)
+                ->where('status','=','5')
+                ->select('id','user_id', 'amount', 'transaction_id', 'transaction_at', 'description', 'response', 'status', 'created_at')
+                ->latest()
+                ->get();
             if($payments) {
                 $filename = date('Ymdhms').'.pdf';
                 $pdf = PDF::loadView('pdf',  compact('payments'));
@@ -1031,40 +1039,40 @@ class BookingController extends Controller
         try {
             $userid = $request->user()->id;
             $bookings = Booking::with('userinfo','serviceinfo' ,'treatmentinfo','employeeinfo')
-                        ->where('vendor_id', $userid)
-                        ->whereIn('status_id', ['6'])
-                        ->whereDate('booking_date', '>=', date( "Y-m-d"))
-                        ->whereDate('booking_date', '<=', date( "Y-m-d", strtotime( date('Y-m-d')." +7 day" ) ))
-                        ->select('id','user_id','employee_id','service_id','treatment_id','booking_date','booking_time as startHour','orderid','expct_amount','final_amount','discount_amount','full_amount')
-                        ->orderBy('booking_date', 'DESC')
-                        ->orderBy('booking_time', 'DESC')
-                        ->orderBy('id', 'DESC')
-                        ->paginate(70);
+                ->where('vendor_id', $userid)
+                ->whereIn('status_id', ['6'])
+                ->whereDate('booking_date', '>=', date( "Y-m-d"))
+                ->whereDate('booking_date', '<=', date( "Y-m-d", strtotime( date('Y-m-d')." +7 day" ) ))
+                ->select('id','user_id','employee_id','service_id','treatment_id','booking_date','booking_time as startHour','orderid','expct_amount','final_amount','discount_amount','full_amount')
+                ->orderBy('booking_date', 'DESC')
+                ->orderBy('booking_time', 'DESC')
+                ->orderBy('id', 'DESC')
+                ->paginate(70);
             if ($bookings) {
                 $bookings->getCollection()->transform(function ($value) use($userid) {
                     $startDay = 0;
                     $day = date("D", strtotime($value->booking_date));
                     switch ($day) {
                         case 'Mon':
-                           $startDay = 1 ;
+                            $startDay = 1 ;
                             break;
                         case 'Tue':
-                           $startDay = 2 ;
+                            $startDay = 2 ;
                             break;
                         case 'Wed':
-                           $startDay = 3 ;
+                            $startDay = 3 ;
                             break;
                         case 'Thu':
-                           $startDay = 4 ;
+                            $startDay = 4 ;
                             break;
                         case 'Fri':
-                           $startDay = 5 ;
+                            $startDay = 5 ;
                             break;
                         case 'Sat':
-                           $startDay = 6 ;
+                            $startDay = 6 ;
                             break;
                         case 'Sun':
-                           $startDay = 7 ;
+                            $startDay = 7 ;
                             break;
                         default:
                             $startDay = 0;
@@ -1216,66 +1224,66 @@ class BookingController extends Controller
 
 
             $blocktime = DB::table('blocktime')->where('vendor_id', $userid)
-                        ->where(function ($query) use($start_date, $end_date, $employee_id) {
-                            if($employee_id)
-                            {
-                                $query->where('employee_id','=', $employee_id);
-                            }
-                            $query->whereDate('booking_date', '>=', $start_date);
-                            $query->whereDate('booking_date', '<=', $end_date);
-                            $query->orderBy('booking_date', 'ASC');
-                            $query->orderBy('booking_time', 'ASC');
-                        })->get();
+                ->where(function ($query) use($start_date, $end_date, $employee_id) {
+                    if($employee_id)
+                    {
+                        $query->where('employee_id','=', $employee_id);
+                    }
+                    $query->whereDate('booking_date', '>=', $start_date);
+                    $query->whereDate('booking_date', '<=', $end_date);
+                    $query->orderBy('booking_date', 'ASC');
+                    $query->orderBy('booking_time', 'ASC');
+                })->get();
             $bookings = VendorTeam::with(['appointments.serviceinfo' ,'appointments.treatmentinfo','appointments' => function ($query) use ($start_date, $end_date, $employee_id) {
-                                if($employee_id)
-                                {
-                                    $query->where('employee_id','=', $employee_id);
-                                }
-                                $query->whereDate('booking_date', '>=', $start_date);
-                                $query->whereDate('booking_date', '<=', $end_date);
-                                $query->orderBy('booking_date', 'ASC');
-                                $query->orderBy('booking_time', 'ASC');
-                            }
-                        ])
-                        ->where('vendor_id', $userid)
-                        ->select('id','vendor_id','employee_name',DB::raw('CONCAT("'.URL::to('/').'", "/public/", profile_pic) AS profile_pic'))
-                        ->paginate(70);
+                if($employee_id)
+                {
+                    $query->where('employee_id','=', $employee_id);
+                }
+                $query->whereDate('booking_date', '>=', $start_date);
+                $query->whereDate('booking_date', '<=', $end_date);
+                $query->orderBy('booking_date', 'ASC');
+                $query->orderBy('booking_time', 'ASC');
+            }
+            ])
+                ->where('vendor_id', $userid)
+                ->select('id','vendor_id','employee_name',DB::raw('CONCAT("'.URL::to('/').'", "/public/", profile_pic) AS profile_pic'))
+                ->paginate(70);
             if ($bookings) {
                 $bookings->getCollection()->transform(function ($value) use($workings, $start_date, $blocktime) {
-                            $appointments = collect([]);
-                            foreach ($value->appointments as $key => $bookingrows) {
-                                $collection = collect(['id' => $bookingrows->id,
-                                    'employee_id' => $bookingrows->employee_id,
-                                    'booking_date' => $bookingrows->booking_date,
-                                    'booking_time' => $bookingrows->booking_time,
-                                    'final_amount' => $bookingrows->final_amount,
-                                    'full_amount' => $bookingrows->full_amount,
-                                    'expct_end_time' => $bookingrows->expct_end_time,
-                                    'service_name' => $bookingrows['serviceinfo']['service_name'],
-                                    'treatment_name' => $bookingrows['treatmentinfo']['treatment_name'],
-                                    'type' => 'Booking'
-                                ]);
-                                $appointments->push($collection);
-                            }
-                            foreach ($blocktime->where('employee_id',$value->id) as $row => $blockrows) {
-                               $collection2 = collect(['id' => $blockrows->id,
-                                    'employee_id' => $blockrows->employee_id,
-                                    'booking_date' => $blockrows->booking_date,
-                                    'booking_time' => $blockrows->booking_time,
-                                    'final_amount' => $blockrows->final_amount,
-                                    'full_amount' => $blockrows->full_amount,
-                                    'expct_end_time' => $blockrows->expct_end_time,
-                                    'service_name' => '',
-                                    'treatment_name' => '',
-                                    'type' => 'Blocked'
-                                ]);
-                                $appointments->push($collection2);
-                            }
-                            $sorted = $appointments->sortBy([
-                                fn ($a, $b) => $a['booking_date'] <=> $b['booking_date'],
-                                fn ($a, $b) => $b['booking_time'] <=> $a['booking_time'],
-                            ]);
-                            unset($value['appointments']);
+                    $appointments = collect([]);
+                    foreach ($value->appointments as $key => $bookingrows) {
+                        $collection = collect(['id' => $bookingrows->id,
+                            'employee_id' => $bookingrows->employee_id,
+                            'booking_date' => $bookingrows->booking_date,
+                            'booking_time' => $bookingrows->booking_time,
+                            'final_amount' => $bookingrows->final_amount,
+                            'full_amount' => $bookingrows->full_amount,
+                            'expct_end_time' => $bookingrows->expct_end_time,
+                            'service_name' => $bookingrows['serviceinfo']['service_name'],
+                            'treatment_name' => $bookingrows['treatmentinfo']['treatment_name'],
+                            'type' => 'Booking'
+                        ]);
+                        $appointments->push($collection);
+                    }
+                    foreach ($blocktime->where('employee_id',$value->id) as $row => $blockrows) {
+                        $collection2 = collect(['id' => $blockrows->id,
+                            'employee_id' => $blockrows->employee_id,
+                            'booking_date' => $blockrows->booking_date,
+                            'booking_time' => $blockrows->booking_time,
+                            'final_amount' => $blockrows->final_amount,
+                            'full_amount' => $blockrows->full_amount,
+                            'expct_end_time' => $blockrows->expct_end_time,
+                            'service_name' => '',
+                            'treatment_name' => '',
+                            'type' => 'Blocked'
+                        ]);
+                        $appointments->push($collection2);
+                    }
+                    $sorted = $appointments->sortBy([
+                        fn ($a, $b) => $a['booking_date'] <=> $b['booking_date'],
+                        fn ($a, $b) => $b['booking_time'] <=> $a['booking_time'],
+                    ]);
+                    unset($value['appointments']);
                     $value['workings'] = $workings ;
                     $value['appointments'] = $sorted->values()->all();
                     return $value;
@@ -1352,12 +1360,12 @@ class BookingController extends Controller
             $expct_end_time = strtotime($request->booking_date.' '.$request->end_time);
             $data = collect([]);
             $bookings = Booking::where('vendor_id', $request->vendor_id)
-                                        ->whereDate('booking_date',$request->booking_date)
-                                        ->where('booking_time', '>=', date('H:i',strtotime($request->booking_time)))
-                                        ->where('booking_time', '<',  date('H:i',strtotime($request->end_time)))
-                                        ->select('id','employee_id','status_id', 'vendor_id','booking_time')
-                                        ->get();
-                                        // dd($bookings);
+                ->whereDate('booking_date',$request->booking_date)
+                ->where('booking_time', '>=', date('H:i',strtotime($request->booking_time)))
+                ->where('booking_time', '<',  date('H:i',strtotime($request->end_time)))
+                ->select('id','employee_id','status_id', 'vendor_id','booking_time')
+                ->get();
+            // dd($bookings);
 
             foreach ($employees as $key => $rows) {
 

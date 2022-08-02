@@ -1067,7 +1067,7 @@ class VendorController extends Controller
                 $notification->title = 'Membership purchased';
                 $notification->message = 'Congratulations, You have successfully purchased the membership.';
                 $notification->type = 'Membership Plan';
-                $notification->user_id  = $membership->vendor_id;
+                $notification->user_id  = $userid;
                 $notification->type_id  = $membership->id;
                 $notification->created_at = date('d-m-Y H:i:s');
                 $notification->save();

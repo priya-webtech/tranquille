@@ -86,7 +86,7 @@
     <script src="{{ url('/') . '/' . asset('assets/js/pcoded.min.js') }}"></script>
     <!-- custom-chart js -->
     <!--     <script src="{{ url('/') . '/' . asset('assets/js/pages/dashboard-sale.js') }}"></script> -->
-    <script src="{{ url('/') . '/' . asset('assets/js/plugins/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url('/') . '/' . asset('assets/js/plugins/jquery.dataTables.min.js') }}" defer></script>
     <script src="{{ url('/') . '/' . asset('assets/js/plugins/dataTables.bootstrap4.min.js') }}"></script>
     <!-- jquery-validation Js -->
     <script src="{{ url('/') . '/' . asset('assets/js/plugins/jquery.validate.min.js') }}"></script>
