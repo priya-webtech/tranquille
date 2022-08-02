@@ -19,12 +19,19 @@ class BookingDashboardController extends Controller
             return datatables()->of(Booking::with('userinfo', 'vendorinfo', 'serviceinfo', 'treatmentinfo', 'statusinfo')->select('*'))
                 ->addIndexColumn()
                 ->editColumn('username', function ($query) {
-                    return '<img src="' . asset(isset($query['userinfo']['profile']) ? $query['userinfo']['profile'] : 'assets/image/dummy.png') . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['userinfo']['firstname'] . ' ' . $query['userinfo']['lastname'];
+                    if(!empty($query['userinfo'])) {
+                        return '<img src="' . asset(isset($query['userinfo']['profile']) ? $query['userinfo']['profile'] : 'assets/image/dummy.png') . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['userinfo']['firstname'] . ' ' . $query['userinfo']['lastname'];
+                    }
                 })
                 ->editColumn('logo', function ($query) {
-                    return '<img src="' . asset(isset($query['vendorinfo']['logo']) ? $query['vendorinfo']['logo'] : 'assets/image/dummy.png') . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['vendorinfo']['firm_name'];
+                    if(!empty($query['vendorinfo'])) {
+                        return '<img src="' . asset(isset($query['vendorinfo']['logo']) ? $query['vendorinfo']['logo'] : 'assets/image/dummy.png') . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['vendorinfo']['firm_name'];
+                    }
+                        
                 })
                 ->editColumn('status', function ($query) {
+                    if(!empty($query['statusinfo']))
+                    {
                     $classname = "";
                     switch ($query['statusinfo']['status']) {
                         case 'Open':
@@ -72,6 +79,7 @@ class BookingDashboardController extends Controller
                     }
                     return  '<div  class="' . $classname . '">' . $query['statusinfo']['status'] . '
                     </div>';
+                    }
                 })
                 ->addColumn('action', function ($query) {
                     $active = ($query->active == 'N') ? 'checked="" value="' . $query->active . '"' : 'value="' . $query->active . '"';

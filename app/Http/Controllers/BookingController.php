@@ -24,56 +24,62 @@ class BookingController extends Controller
             return datatables()->of(Booking::with('userinfo', 'vendorinfo', 'serviceinfo', 'treatmentinfo', 'statusinfo')->select('*'))
                 ->addIndexColumn()
                 ->editColumn('user_id', function ($query) {
-                    return '<img src="' . asset(isset($query['userinfo']['profile']) ? $query['userinfo']['profile'] : 'assets/image/dummy.png') . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['userinfo']['firstname'] . ' ' . $query['userinfo']['lastname'];
+                    if(!empty($query['userinfo'])) {
+                        return '<img src="' . asset(isset($query['userinfo']['profile']) ? $query['userinfo']['profile'] : 'assets/image/dummy.png') . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['userinfo']['firstname'] . ' ' . $query['userinfo']['lastname'];
+                    }
                 })
                 ->editColumn('logo', function ($query) {
-                    return '<img src="' . asset($query['vendorinfo']['logo']) . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['vendorinfo']['firm_name'];
+                    if(!empty($query['vendorinfo'])) {
+                        return '<img src="' . asset($query['vendorinfo']['logo']) . '" alt="" class="img-fluid wid-40 m-r-15 rounded">' . $query['vendorinfo']['firm_name'];
+                    }
                 })
                 ->editColumn('status', function ($query) {
-                    $classname = "";
-                    switch ($query['statusinfo']['status']) {
-                        case 'Open':
-                            $classname = "badge bg-light-primary";
-                            break;
-                        case 'Canceled':
-                            $classname = "badge bg-light-danger";
-                            break;
-                        case 'Pending':
-                            $classname = "badge bg-light-secondary";
-                            break;
-                        case 'Processing':
-                            $classname = "badge bg-light-warning";
-                            break;
-                        case 'Payment Done':
-                            $classname = "badge bg-light-success";
-                            break;
-                        case 'Accepted':
-                            $classname = "badge bg-light-info";
-                            break;
-                        case 'Closed':
-                            $classname = "badge bg-light-dark";
-                            break;
-                        case 'Rejected':
-                            $classname = "badge bg-light-primary";
-                            break;
-                        case 'Refunded':
-                            $classname = "badge bg-light-success";
-                            break;
-                        case 'Reschedule':
-                            $classname = "badge bg-light-secondary";
-                            break;
-                        case 'Completed':
-                            $classname = "badge bg-light-info";
-                            break;
-                        case 'Payment Hold':
-                            $classname = "badge bg-light-warning";
-                            break;
-                        case 'Payment Failed':
-                            $classname = "badge bg-light-danger";
-                            break;
-                        default:
-                            # code...
-                            break;
+                    if(!empty($query['statusinfo'])) {
+                        $classname = "";
+                        switch ($query['statusinfo']['status']) {
+                            case 'Open':
+                                $classname = "badge bg-light-primary";
+                                break;
+                            case 'Canceled':
+                                $classname = "badge bg-light-danger";
+                                break;
+                            case 'Pending':
+                                $classname = "badge bg-light-secondary";
+                                break;
+                            case 'Processing':
+                                $classname = "badge bg-light-warning";
+                                break;
+                            case 'Payment Done':
+                                $classname = "badge bg-light-success";
+                                break;
+                            case 'Accepted':
+                                $classname = "badge bg-light-info";
+                                break;
+                            case 'Closed':
+                                $classname = "badge bg-light-dark";
+                                break;
+                            case 'Rejected':
+                                $classname = "badge bg-light-primary";
+                                break;
+                            case 'Refunded':
+                                $classname = "badge bg-light-success";
+                                break;
+                            case 'Reschedule':
+                                $classname = "badge bg-light-secondary";
+                                break;
+                            case 'Completed':
+                                $classname = "badge bg-light-info";
+                                break;
+                            case 'Payment Hold':
+                                $classname = "badge bg-light-warning";
+                                break;
+                            case 'Payment Failed':
+                                $classname = "badge bg-light-danger";
+                                break;
+                            default:
+                                # code...
+                                break;
+                        }
                     }
                     return  '<div  class="' . $classname . '">' . $query['statusinfo']['status'] . '
                     </div>';
